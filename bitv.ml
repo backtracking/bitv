@@ -14,39 +14,88 @@
  * (enclosed in the file LGPL).
  *)
 
-(* $Id: bitv.ml,v 1.5 2000/02/28 18:59:34 filliatr Exp $ *)
+(* $Id: bitv.ml,v 1.6 2000/04/24 23:20:30 filliatr Exp $ *)
 
 (*s Bit vectors. The interface and part of the code are borrowed from the 
     [Array] module of the ocaml standard library (but things are simplified
-    here since we can always initialize a bit vector). *)
+    here since we can always initialize a bit vector). This module also
+    provides bitwise operations. *)
 
-let bpi = Sys.word_size - 2  (* bits per int (30 or 62) *)
+(*s We represent a bit vector by a vector of integers (field [bits]),
+    and we keep the information of the size of the bit vector since it
+    can not be found out with the size of the array (field [length]). *)
+
+type t = {
+  length : int;
+  bits   : int array }
+
+let length v = v.length
+
+(*s Each element of the array is an integer containing [bpi] bits, where
+    [bpi] is determined according to the machine word size. Since we do not
+    use the sign bit, [bpi] is 30 on a 32-bits machine and 62 on a 64-bits
+    machines. We maintain the following invariant:
+    {\em The unused bits of the last integer are always 
+    zeros.} This is ensured by [create] and maintained in other functions
+    using [normalize]. [bit_j], [bit_not_j], [low_mask] and [up_mask]
+    are arrays used to extract and mask bits in a single integer. *)
+
+let bpi = Sys.word_size - 2
+
+let max_length = Sys.max_array_length * bpi
 
 let bit_j = Array.init bpi (fun j -> 1 lsl j)
 let bit_not_j = Array.init bpi (fun j -> max_int - bit_j.(j))
 
-let max_length = Sys.max_array_length * bpi
+let low_mask = Array.create (succ bpi) 0
+let _ = 
+  for i = 1 to bpi do low_mask.(i) <- low_mask.(i-1) lor bit_j.(pred i) done
 
-(*s We represent a bit vector by a vector of integers, and we keep the
-    information of the size of the bit vector since it can not be found out
-    with the size of the array. 
-    Bit 1 is represented by [true] and bit 0 by [false], as usual. *)
+let keep_lowest_bits a j = a land low_mask.(j)
 
-type t = {
-  length : int;      (* length of the vector *)
-  bits   : int array (* bits array *) }
+let high_mask = Array.init (succ bpi) (fun j -> low_mask.(j) lsl (bpi-j))
+
+let keep_highest_bits a j = a land high_mask.(j)
+
+(*s Creating and normalizing a bit vector is easy: it is just a matter of
+    taking care of the invariant. Copy is immediate. *)
 
 let create n b =
-  let s = let s = n / bpi in if n mod bpi = 0 then s else succ s in
   let initv = if b then max_int else 0 in
-  { length = n;
-    bits = Array.create s initv }
+  let r = n mod bpi in
+  if r = 0 then
+    { length = n; bits = Array.create (n / bpi) initv }
+  else begin
+    let s = n / bpi in
+    let b = Array.create (succ s) initv in
+    b.(s) <- b.(s) land low_mask.(r);
+    { length = n; bits = b }
+  end
+    
+let normalize v =
+  let r = v.length mod bpi in
+  if r > 0 then
+    let b = v.bits in
+    let s = Array.length b in
+    b.(s-1) <- b.(s-1) land low_mask.(r)
 
-let length v = v.length
+let copy v = { length = v.length; bits = Array.copy v.bits }
 
-let pos n = (n / bpi, n mod bpi)
+(*s Access and assignment. The [n]th bit of a bit vector is the [j]th
+    bit of the [i]th integer, where [i = n / bpi] and [j = n mod
+    bpi]. Both [i] and [j] and computed by the function [pos].
+    Accessing a bit is testing whether the result of the corresponding
+    mask operation is non-zero, and assigning it is done with a
+    bitwiwe operation: an {\em or} with [bit_j] to set it, and an {\em
+    and} with [bit_not_j] to unset it. *)
 
-(*s Unsafe operations *)
+let pos n = 
+  let i = n / bpi and j = n mod bpi in
+  if j < 0 then (i - 1, j + bpi) else (i,j)
+
+let unsafe_get v n =
+  let (i,j) = pos n in 
+  ((Array.unsafe_get v.bits i) land (Array.unsafe_get bit_j j)) > 0
 
 let unsafe_set v n b =
   let (i,j) = pos n in
@@ -57,11 +106,12 @@ let unsafe_set v n b =
     Array.unsafe_set v.bits i 
       ((Array.unsafe_get v.bits i) land (Array.unsafe_get bit_not_j j))
 
-let unsafe_get v n =
+(*s The corresponding safe operations test the validiy of the access. *)
+
+let get v n =
+  if n < 0 or n >= v.length then invalid_arg "Bitv.set";
   let (i,j) = pos n in 
   ((Array.unsafe_get v.bits i) land (Array.unsafe_get bit_j j)) > 0
-
-(*s Safe operations *)
 
 let set v n b =
   if n < 0 or n >= v.length then invalid_arg "Bitv.set";
@@ -73,10 +123,7 @@ let set v n b =
     Array.unsafe_set v.bits i
       ((Array.unsafe_get v.bits i) land (Array.unsafe_get bit_not_j j))
 
-let get v n =
-  if n < 0 or n >= v.length then invalid_arg "Bitv.set";
-  let (i,j) = pos n in 
-  ((Array.unsafe_get v.bits i) land (Array.unsafe_get bit_j j)) > 0
+(*s [init] is implemented naively using [unsafe_set]. *)
 
 let init n f =
   let v = create n false in
@@ -85,58 +132,163 @@ let init n f =
   done;
   v
 
-let copy v =
-  { length = v.length;
-    bits = Array.copy v.bits }
+(*s Handling bits by packets is the key for efficiency of functions
+    [append], [concat], [sub] and [blit]. 
+    We start by a very general function [blit_bits a i m v n] which blits 
+    the bits [i] to [i+m-1] of a native integer [a] 
+    onto the bit vector [v] at index [n]. It assumes that [i..i+m-1] and
+    [n..n+m-1] are respectively valid subparts of [a] and [v]. 
+    It is optimized when the bits fit the lowest boundary of an integer 
+    (case [j == 0]). *)
 
-(*i OPTIM i*)
+let blit_bits a i m v n =
+  let (i',j) = pos n in
+  if j == 0 then
+    Array.unsafe_set v i'
+      ((keep_lowest_bits (a lsr i) m) lor
+       (keep_highest_bits (Array.unsafe_get v i') (bpi - m)))
+  else 
+    let d = m + j - bpi in
+    if d > 0 then begin
+      Array.unsafe_set v i'
+	(((keep_lowest_bits (a lsr i) (bpi - j)) lsl j) lor
+	 (keep_lowest_bits (Array.unsafe_get v i') j));
+      Array.unsafe_set v (succ i')
+	((keep_lowest_bits (a lsr (i + bpi - j)) d) lor
+	 (keep_highest_bits (Array.unsafe_get v (succ i')) (bpi - d)))
+    end else 
+      Array.unsafe_set v i'
+	(((keep_lowest_bits (a lsr i) m) lsl j) lor
+	 ((Array.unsafe_get v i') land (low_mask.(j) lor high_mask.(-d))))
+
+(*s [blit_int] implements [blit_bits] in the particular case when
+    [i=0] and [m=bpi] i.e. when we blit all the bits of [a]. *)
+
+let blit_int a v n =
+  let (i,j) = pos n in
+  if j == 0 then
+    Array.unsafe_set v i a
+  else begin
+    Array.unsafe_set v i 
+      ( (keep_lowest_bits (Array.unsafe_get v i) j) lor
+       ((keep_lowest_bits a (bpi - j)) lsl j));
+    Array.unsafe_set v (succ i)
+      ((keep_highest_bits (Array.unsafe_get v (succ i)) (bpi - j)) lor
+       (a lsr (bpi - j)))
+  end
+
+(*s When blitting a subpart of a bit vector into another bit vector, there
+    are two possible cases: (1) all the bits are contained in a single integer
+    of the first bit vector, and a single call to [blit_bits] is the
+    only thing to do, or (2) the source bits overlap on several integers of
+    the source array, and then we do a loop of [blit_int], with two calls
+    to [blit_bits] for the two bounds. *)
+
+let unsafe_blit v1 ofs1 v2 ofs2 len =
+  let (bi,bj) = pos ofs1 in
+  let (ei,ej) = pos (ofs1 + len - 1) in
+  if bi == ei then
+    blit_bits (Array.unsafe_get v1 bi) bj len v2 ofs2
+  else begin
+    blit_bits (Array.unsafe_get v1 bi) bj (bpi - bj) v2 ofs2;
+    let n = ref (ofs2 + bpi - bj) in
+    for i = succ bi to pred ei do
+      blit_int (Array.unsafe_get v1 i) v2 !n;
+      n := !n + bpi
+    done;
+    blit_bits (Array.unsafe_get v1 ei) 0 (succ ej) v2 !n
+  end
+
+let blit v1 ofs1 v2 ofs2 len =
+  if len < 0 or ofs1 < 0 or ofs1 + len > v1.length
+             or ofs2 < 0 or ofs2 + len > v2.length
+  then invalid_arg "Bitv.blit";
+  unsafe_blit v1.bits ofs1 v2.bits ofs2 len
+
+(*s Extracting the subvector [ofs..ofs+len-1] of [v] is just creating a
+    new vector of length [len] and blitting the subvector of [v] inside. *)
+
+let sub v ofs len =
+  if ofs < 0 or len < 0 or ofs + len > v.length then invalid_arg "Bitv.sub";
+  let r = create len false in
+  unsafe_blit v.bits ofs r.bits 0 len;
+  r
+
+(*s The concatenation of two bit vectors [v1] and [v2] is obtained by 
+    creating a vector for the result and blitting inside the two vectors.
+    [v1] is copied directly. *)
+
 let append v1 v2 =
   let l1 = v1.length 
   and l2 = v2.length in
   let r = create (l1 + l2) false in
-  for i = 0 to l1 - 1 do unsafe_set r i (unsafe_get v1 i) done;  
-  for i = 0 to l2 - 1 do unsafe_set r (i + l1) (unsafe_get v2 i) done;  
+  let b1 = v1.bits in
+  let b2 = v2.bits in
+  let b = r.bits in
+  for i = 0 to Array.length b1 - 1 do 
+    Array.unsafe_set b i (Array.unsafe_get b1 i) 
+  done;  
+  unsafe_blit b2 0 b l1 l2;
   r
+
+(*s The concatenation of a list of bit vectors is obtained by iterating
+    [unsafe_blit]. *)
 
 let concat vl =
   let size = List.fold_left (fun sz v -> sz + v.length) 0 vl in
   let res = create size false in
+  let b = res.bits in
   let pos = ref 0 in
   List.iter
     (fun v ->
-       for i = 0 to v.length - 1 do
-         unsafe_set res !pos (unsafe_get v i);
-         incr pos
-       done)
+       let n = v.length in
+       unsafe_blit v.bits 0 b !pos n;
+       pos := !pos + n)
     vl;
   res
 
-(*i OPTIM i*)
-let sub v ofs len =
-  if ofs < 0 or len < 0 or ofs + len > v.length then invalid_arg "Bitv.sub";
-  let r = create len false in
-  for i = 0 to len - 1 do unsafe_set r i (unsafe_get v (ofs + i)) done;
-  r
+(*s Filling is a particular case of blitting with a source made of all
+    ones or all zeros. Thus we instanciate [unsafe_blit], with 0 and
+    [max_int]. *)
+
+let blit_zeros v ofs len =
+  let (bi,bj) = pos ofs in
+  let (ei,ej) = pos (ofs + len - 1) in
+  if bi == ei then
+    blit_bits 0 bj len v ofs
+  else begin
+    blit_bits 0 bj (bpi - bj) v ofs;
+    let n = ref (ofs + bpi - bj) in
+    for i = succ bi to pred ei do
+      blit_int 0 v !n;
+      n := !n + bpi
+    done;
+    blit_bits 0 0 (succ ej) v !n
+  end
+
+let blit_ones v ofs len =
+  let (bi,bj) = pos ofs in
+  let (ei,ej) = pos (ofs + len - 1) in
+  if bi == ei then
+    blit_bits max_int bj len v ofs
+  else begin
+    blit_bits max_int bj (bpi - bj) v ofs;
+    let n = ref (ofs + bpi - bj) in
+    for i = succ bi to pred ei do
+      blit_int max_int v !n;
+      n := !n + bpi
+    done;
+    blit_bits max_int 0 (succ ej) v !n
+  end
 
 let fill v ofs len b =
   if ofs < 0 or len < 0 or ofs + len > v.length then invalid_arg "Bitv.fill";
-  for i = ofs to ofs + len - 1 do unsafe_set v i b done
+  if b then blit_ones v.bits ofs len else blit_zeros v.bits ofs len
 
-(*i OPTIM i*)
-let blit a1 ofs1 a2 ofs2 len =
-  if len < 0 or ofs1 < 0 or ofs1 + len > length a1
-             or ofs2 < 0 or ofs2 + len > length a2
-  then invalid_arg "Bitv.blit";
-  if ofs1 < ofs2 then
-    (* Top-down copy *)
-    for i = len - 1 downto 0 do
-      unsafe_set a2 (ofs2 + i) (unsafe_get a1 (ofs1 + i))
-    done
-  else
-    (* Bottom-up copy *)
-    for i = 0 to len - 1 do
-      unsafe_set a2 (ofs2 + i) (unsafe_get a1 (ofs1 + i))
-    done
+(*s All the iterators are implemented as for traditional arrays, using
+    [unsafe_get]. For [iter] and [map], we do not precompute [(f
+    true)] and [(f false)] since [f] is likely to have
+    side-effects. *)
 
 let iter f v =
   for i = 0 to v.length - 1 do f (unsafe_get v i) done
@@ -174,11 +326,14 @@ let fold_right f v x =
   done;
   !r
 
-(*s Bitwise operations. *)
+(*s Bitwise operations. It is straigthforward, since bitwise operations
+    can be realized by the corresponding bitwise operations over integers.
+    However, one has to take care of normalizing the result of [bwnot]
+    which introduces ones in highest significant positions. *)
 
-let bwand v1 v2 = 
+let bw_and v1 v2 = 
   let l = v1.length in
-  if l <> v2.length then invalid_arg "Bitv.bwand";
+  if l <> v2.length then invalid_arg "Bitv.bw_and";
   let b1 = v1.bits 
   and b2 = v2.bits in
   let n = Array.length b1 in
@@ -188,9 +343,9 @@ let bwand v1 v2 =
   done;
   { length = l; bits = a }
   
-let bwor v1 v2 = 
+let bw_or v1 v2 = 
   let l = v1.length in
-  if l <> v2.length then invalid_arg "Bitv.bwor";
+  if l <> v2.length then invalid_arg "Bitv.bw_or";
   let b1 = v1.bits 
   and b2 = v2.bits in
   let n = Array.length b1 in
@@ -200,9 +355,9 @@ let bwor v1 v2 =
   done;
   { length = l; bits = a }
   
-let bwxor v1 v2 = 
+let bw_xor v1 v2 = 
   let l = v1.length in
-  if l <> v2.length then invalid_arg "Bitv.bwxor";
+  if l <> v2.length then invalid_arg "Bitv.bw_xor";
   let b1 = v1.bits 
   and b2 = v2.bits in
   let n = Array.length b1 in
@@ -212,39 +367,63 @@ let bwxor v1 v2 =
   done;
   { length = l; bits = a }
   
-let bwnot v = 
+let bw_not v = 
   let b = v.bits in
   let n = Array.length b in
   let a = Array.create n 0 in
   for i = 0 to n - 1 do
     a.(i) <- lnot b.(i)
   done;
-  { length = v.length; bits = a }
+  let r = { length = v.length; bits = a } in
+  normalize r;
+  r
 
-(**
-let shiftl v m =
-  if m == 0 then 
+(*s Shift operations. It is easy to reuse [unsafe_blit], although it is 
+    probably slightly less efficient than a ad-hoc piece of code. *)
+
+let rec shiftl v d =
+  if d == 0 then 
     copy v
+  else if d < 0 then
+    shiftr v (-d)
   else begin
-    let d = 
+    let n = v.length in
+    let r = create n false in
+    if d < n then unsafe_blit v.bits 0 r.bits d (n - d);
+    r
   end
   
-let shiftr v m =
-  if m == 0 then 
+and shiftr v d =
+  if d == 0 then 
     copy v
+  else if d < 0 then
+    shiftl v (-d)
   else begin
-
+    let n = v.length in
+    let r = create n false in
+    if d < n then unsafe_blit v.bits d r.bits 0 (n - d);
+    r
   end
-  **)
+
+(*s Testing for all zeros and all ones. *)
 
 let all_zeros v = 
   let b = v.bits in
   let n = Array.length b in
-  let rec test i =
-    if i == n then
-      true
+  let rec test i = 
+    (i == n) || ((Array.unsafe_get b i == 0) && test (succ i)) 
+  in
+  test 0
+
+let all_ones v = 
+  let b = v.bits in
+  let n = Array.length b in
+  let rec test i = 
+    if i == n - 1 then
+      let m = v.length mod bpi in
+      (Array.unsafe_get b i) == (if m == 0 then max_int else low_mask.(m))
     else
-      (Array.unsafe_get b i == 0) && test (succ i)
+      ((Array.unsafe_get b i) == max_int) && test (succ i)
   in
   test 0
 

@@ -1,7 +1,12 @@
- 
+
+version 0.2, 24/4/2000
+======================
+ o normalization, so that generic equality can be used
+ o efficient implementations of append, sub, blit, concat and fill
  o documentation using ocamlweb
  o to_string, from_string
  o bitwise operations, all_zeros
 
-version 0.1:
+version 0.1
+===========
  o first release

@@ -14,7 +14,7 @@
  * (enclosed in the file LGPL).
  *)
 
-(* $Id: bitv.mli,v 1.4 2000/02/28 18:59:34 filliatr Exp $ *)
+(* $Id: bitv.mli,v 1.5 2000/04/24 23:20:31 filliatr Exp $ *)
 
 (*s {\bf Module Bitv}.
     This module implements bit vectors, as an abstract datatype [t]. 
@@ -78,8 +78,8 @@ val concat : t list -> t
 
     [(Bitv.blit v1 o1 v2 o2 len)] copies [len] elements from vector
     [v1], starting at element number [o1], to vector [v2], starting at
-    element number [o2]. It works correctly even if [v1] and [v2] are
-    the same vector, and the source and destination chunks overlap.
+    element number [o2]. It {\em does not work} correctly if [v1] and [v2] are
+    the same vector with the source and destination chunks overlapping.
     Raise [Invalid_argument "Bitv.blit"] if [o1] and [len] do not
     designate a valid subvector of [v1], or if [o2] and [len] do not
     designate a valid subvector of [v2]. *)
@@ -117,25 +117,28 @@ val mapi : (int -> bool -> bool) -> t -> t
 val fold_left : ('a -> bool -> 'a) -> 'a -> t -> 'a
 val fold_right : (bool -> 'a -> 'a) -> t -> 'a -> 'a
 
-(*s {\bf Bitwise operations.} \label{bitwise}
-    [bwand], [bwor] and [bwxor] implement logical and, or and exclusive or.
-    Raise [Invalid_argument "Bitv.xxx"] if the two vectors do not have the
-    same length (where \texttt{xxx} is the name of the function).
-    [bwnot] implements the logical negation. [shiftl] and [shiftr] implement
-    shifts, respectively to the left and to the right. 
-    [all_zeros] tests for a vector only containing zeros. *)
+(*s {\bf Bitwise operations.} \label{bitwise} [bwand], [bwor] and
+    [bwxor] implement logical and, or and exclusive or.  They return
+    fresh vectors and raise [Invalid_argument "Bitv.xxx"] if the two
+    vectors do not have the same length (where \texttt{xxx} is the
+    name of the function).  [bwnot] implements the logical negation. 
+    It returns a fresh vector.
+    [shiftl] and [shiftr] implement shifts. They return fresh vectors.
+    [shiftl] moves bits from least to most significant, and [shiftr]
+    from most to least significant (think [lsl] and [lsr]).
+    [all_zeros] and [all_ones] respectively test for a vector only
+    containing zeros and only containing ones. *)
 
-val bwand : t -> t -> t
-val bwor : t -> t -> t
-val bwxor : t -> t -> t
-val bwnot: t -> t
+val bw_and : t -> t -> t
+val bw_or  : t -> t -> t
+val bw_xor : t -> t -> t
+val bw_not : t -> t
 
-(*i
 val shiftl : t -> int -> t
 val shiftr : t -> int -> t
-i*)
 
 val all_zeros : t -> bool
+val all_ones  : t -> bool
 
 (*s {\bf Conversions to and from strings.} 
     Least significant bit comes first. *)
