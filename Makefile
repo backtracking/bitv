@@ -30,6 +30,21 @@ install-byte:
 install-opt:
 	cp -f $(OPTFILES) $(LIBDIR)
 
+# l.p.
+######
+
+doc: bitv.dvi
+
+bitv.tex: bitv.mli
+	ocamlweb -s --no-index bitv.mli -o $@
+
+bitv.dvi: bitv.tex
+	latex bitv
+
+bitv.ps.gz: bitv.dvi
+	dvips bitv.dvi -o
+	gzip --best bitv.ps
+
 # export
 ########
 
@@ -42,12 +57,13 @@ SOURCES = bitv.mli bitv.ml Makefile .depend README COPYING LGPL
 
 FTP=$(HOME)/WWW/ftp/ocaml/bitv
 
-export::
+export:: bitv.ps.gz
 	mkdir -p export/$(NAME)
 	cp $(SOURCES) export/$(NAME)
 	(cd export; tar cf $(NAME).tar $(NAME); \
 	gzip -f --best $(NAME).tar)
 	cp -f README COPYING LGPL $(MLI) export/$(NAME).tar.gz $(FTP)
+	cp -f bitv.ps.gz $(FTP)
 
 # generic rules :
 #################
@@ -57,10 +73,10 @@ CAMLCOPT = ocamlopt
 FLAGS=
 
 .SUFFIXES: .mli .ml .cmi .cmo .cmx
- 
+
 .mli.cmi:
 	$(CAMLC) -c $(FLAGS) $<
- 
+
 .ml.cmo:
 	$(CAMLC) -c $(FLAGS) $<
 
@@ -76,6 +92,7 @@ FLAGS=
 
 clean:
 	rm -f *~ *.cm[iox] *.o
+	rm -f bitv.tex *.aux *.log *.dvi *.ps *.ps.gz
 
 depend:
 	rm -f .depend

@@ -14,11 +14,11 @@
  * (enclosed in the file LGPL).
  *)
 
-(* $Id: bitv.ml,v 1.3 1999/03/18 17:34:05 filliatr Exp $ *)
+(* $Id: bitv.ml,v 1.4 2000/02/24 18:34:53 filliatr Exp $ *)
 
-(* Bit vectors. The interface and part of the code are borrowed from the 
- * Array module of the ocaml standard library (but things are simplified
- * here since we can always initialize a bit vector). *)
+(*s Bit vectors. The interface and part of the code are borrowed from the 
+    [Array] module of the ocaml standard library (but things are simplified
+    here since we can always initialize a bit vector). *)
 
 let bpi = Sys.word_size - 2  (* bits per int (30 or 62) *)
 
@@ -27,10 +27,10 @@ let bit_not_j = Array.init bpi (fun j -> max_int - bit_j.(j))
 
 let max_length = Sys.max_array_length * bpi
 
-(* We represent a bit vector by a vector of integers, and we keep the
- * information of the size of the bit vector since it can not be found out
- * with the size of the array. 
- * true is represented by 1 and false by zero, as usual. *)
+(*s We represent a bit vector by a vector of integers, and we keep the
+    information of the size of the bit vector since it can not be found out
+    with the size of the array. 
+    [true] is represented by 1 and [false] by 0, as usual. *)
 
 type t =
     { length : int;      (* length of the vector *)
@@ -46,7 +46,7 @@ let length v = v.length
 
 let pos n = (n / bpi, n mod bpi)
 
-(* Unsafe operations *)
+(*s Unsafe operations *)
 
 let unsafe_set v n b =
   let (i,j) = pos n in
@@ -61,7 +61,7 @@ let unsafe_get v n =
   let (i,j) = pos n in 
   ((Array.unsafe_get v.bits i) land (Array.unsafe_get bit_j j)) > 0
 
-(* Safe operations *)
+(*s Safe operations *)
 
 let set v n b =
   if n < 0 or n >= v.length then invalid_arg "Bitv.set";
