@@ -14,7 +14,7 @@
  * (enclosed in the file LGPL).
  *)
 
-(*i $Id: bitv.ml,v 1.13 2003/04/03 10:38:57 filliatr Exp $ i*)
+(*i $Id: bitv.ml,v 1.14 2004/07/07 06:54:21 filliatr Exp $ i*)
 
 (*s Bit vectors. The interface and part of the code are borrowed from the 
     [Array] module of the ocaml standard library (but things are simplified
@@ -109,7 +109,7 @@ let unsafe_set v n b =
 (*s The corresponding safe operations test the validiy of the access. *)
 
 let get v n =
-  if n < 0 or n >= v.length then invalid_arg "Bitv.set";
+  if n < 0 or n >= v.length then invalid_arg "Bitv.get";
   let (i,j) = pos n in 
   ((Array.unsafe_get v.bits i) land (Array.unsafe_get bit_j j)) > 0
 
@@ -518,7 +518,7 @@ let to_int_us v =
 let of_int_s i = 
   { length = succ bpi; bits = [| i land max_int; (i lsr bpi) land 1 |] }
 let to_int_s v = 
-  if v.length < succ bpi then invalid_arg "Bitv.to_int_us"; 
+  if v.length < succ bpi then invalid_arg "Bitv.to_int_s"; 
   v.bits.(0) lor (v.bits.(1) lsl bpi)
 
 (* [Int32] *)
