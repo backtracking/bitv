@@ -14,7 +14,7 @@
  * (enclosed in the file LGPL).
  *)
 
-(*i $Id: bitv.ml,v 1.14 2004/07/07 06:54:21 filliatr Exp $ i*)
+(*i $Id: bitv.ml,v 1.15 2004/07/13 12:53:09 filliatr Exp $ i*)
 
 (*s Bit vectors. The interface and part of the code are borrowed from the 
     [Array] module of the ocaml standard library (but things are simplified
@@ -326,6 +326,20 @@ let fold_right f v x =
   done;
   !r
 
+let foldi_left f x v =
+  let r = ref x in
+  for i = 0 to v.length - 1 do
+    r := f !r i (unsafe_get v i)
+  done;
+  !r
+
+let foldi_right f v x =
+  let r = ref x in
+  for i = v.length - 1 downto 0 do
+    r := f i (unsafe_get v i) !r
+  done;
+  !r
+
 (*s Bitwise operations. It is straigthforward, since bitwise operations
     can be realized by the corresponding bitwise operations over integers.
     However, one has to take care of normalizing the result of [bwnot]
@@ -539,12 +553,15 @@ let to_int32_us v =
 	Int32.of_int (v.bits.(0) land 0x7fffffff)
     | _ -> assert false
 
+(* this is 0xffffffff (ocaml >= 3.08 checks for literal overflow) *)
+let ffffffff = (0xffff lsl 16) lor 0xffff
+
 let of_int32_s i = match Sys.word_size with
   | 32 -> { length = 32; 
 	    bits = [| (Int32.to_int i) land max_int; 
 		      let hi = Int32.shift_right_logical i 30 in
 		      (Int32.to_int hi) land 3 |] }
-  | 64 -> { length = 32; bits = [| (Int32.to_int i) land 0xffffffff |] }
+  | 64 -> { length = 32; bits = [| (Int32.to_int i) land ffffffff |] }
   | _ -> assert false
 let to_int32_s v =
   if v.length < 32 then invalid_arg "Bitv.to_int32_s"; 
@@ -553,7 +570,7 @@ let to_int32_s v =
 	Int32.logor (Int32.of_int v.bits.(0))
 	            (Int32.shift_left (Int32.of_int (v.bits.(1) land 3)) 30)
     | 64 ->
-	Int32.of_int (v.bits.(0) land 0xffffffff)
+	Int32.of_int (v.bits.(0) land ffffffff)
     | _ -> assert false
 
 (* [Int64] *)

@@ -1,4 +1,8 @@
 
+ o added foldi_left and foldi_right
+ o patch for ocaml >= 3.08 (0xffffffff is not more accepted as a literal)
+ o fixed Invalid_argument messages (now exactly the function name)
+
 version 0.5, 22/11/2002
 =======================
  o added print : formatter -> t -> unit
