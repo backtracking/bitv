@@ -14,17 +14,19 @@
  * (enclosed in the file LGPL).
  *)
 
-(* $Id: bitv.mli,v 1.3 2000/02/24 18:34:53 filliatr Exp $ *)
+(* $Id: bitv.mli,v 1.4 2000/02/28 18:59:34 filliatr Exp $ *)
 
-(*s The abstract type of bit vectors. *)
+(*s {\bf Module Bitv}.
+    This module implements bit vectors, as an abstract datatype [t]. 
+    Since bit vectors are particular cases of arrays, this module provides
+    the same operations as the module [Array] (Sections~\ref{barray} 
+    up to \ref{earray}). It also provides bitwise operations 
+    (Section~\ref{bitwise}). In the following, [false] stands for the bit 0 
+    and [true] for the bit 1. *)
 
 type t
 
-(*s [max_length] is the maximum length of a bit vector (System dependent). *)
-
-val max_length : int
-
-(*s Creation, access and assignment. 
+(*s {\bf Creation, access and assignment.} \label{barray}
     [(Bitv.create n b)] creates a new bit vector of length [n],
     initialized with [b].
     [(Bitv.init n f)] returns a fresh vector of length [n],
@@ -44,19 +46,25 @@ val get : t -> int -> bool
 
 val length : t -> int
 
-(*s Copies and concatenations. [(Bitv.copy v)] returns a copy of [v],
+(*s [max_length] is the maximum length of a bit vector (System dependent). *)
+
+val max_length : int
+
+(*s {\bf Copies and concatenations.}
+   [(Bitv.copy v)] returns a copy of [v],
    that is, a fresh vector containing the same elements as
    [v]. [(Bitv.append v1 v2)] returns a fresh vector containing the
    concatenation of the vectors [v1] and [v2]. [Bitv.concat] is
    similar to [Bitv.append], but catenates a list of vectors. *)
 
-val copy: t -> t
+val copy : t -> t
 
-val append: t -> t -> t
+val append : t -> t -> t
 
-val concat: t list -> t
+val concat : t list -> t
 
-(*s Sub-vectors and filling. [(Bitv.sub v start len)] returns a fresh
+(*s {\bf Sub-vectors and filling.} 
+    [(Bitv.sub v start len)] returns a fresh
     vector of length [len], containing the bits number [start] to
     [start + len - 1] of vector [v].  Raise [Invalid_argument
     "Bitv.sub"] if [start] and [len] do not designate a valid
@@ -76,14 +84,16 @@ val concat: t list -> t
     designate a valid subvector of [v1], or if [o2] and [len] do not
     designate a valid subvector of [v2]. *)
 
-val sub: t -> int -> int -> t
+val sub : t -> int -> int -> t
 
-val fill: t -> int -> int -> bool -> unit
+val fill : t -> int -> int -> bool -> unit
 
-val blit: t -> int -> t -> int -> int -> unit
+val blit : t -> int -> t -> int -> int -> unit
 
-(*s Iterators. [(Bitv.iter f v)] applies function [f] in turn to all
-    the elements of [v]. [(Bitv.map f v)] applies function [f] to all
+(*s {\bf Iterators.} \label{earray}
+    [(Bitv.iter f v)] applies function [f] in turn to all
+    the elements of [v]. Given a function [f], [(Bitv.map f v)] applies
+    [f] to all
     the elements of [v], and builds a vector with the results returned
     by [f]. [Bitv.iteri] and [Bitv.mapi] are similar to [Bitv.iter]
     and [Bitv.map] respectively, but the function is applied to the
@@ -98,16 +108,40 @@ val blit: t -> int -> t -> int -> int -> unit
     ( ... (f (get v (n-1)) x) ...))], where [n] is the length of the
     vector [v]. *)
 
-val iter: (bool -> unit) -> t -> unit
+val iter : (bool -> unit) -> t -> unit
+val map : (bool -> bool) -> t -> t
 
-val map: (bool -> bool) -> t -> t
+val iteri : (int -> bool -> unit) -> t -> unit
+val mapi : (int -> bool -> bool) -> t -> t
 
-val iteri: (int -> bool -> unit) -> t -> unit
-val mapi: (int -> bool -> bool) -> t -> t
+val fold_left : ('a -> bool -> 'a) -> 'a -> t -> 'a
+val fold_right : (bool -> 'a -> 'a) -> t -> 'a -> 'a
 
-val fold_left: ('a -> bool -> 'a) -> 'a -> t -> 'a
+(*s {\bf Bitwise operations.} \label{bitwise}
+    [bwand], [bwor] and [bwxor] implement logical and, or and exclusive or.
+    Raise [Invalid_argument "Bitv.xxx"] if the two vectors do not have the
+    same length (where \texttt{xxx} is the name of the function).
+    [bwnot] implements the logical negation. [shiftl] and [shiftr] implement
+    shifts, respectively to the left and to the right. 
+    [all_zeros] tests for a vector only containing zeros. *)
 
-val fold_right: (bool -> 'a -> 'a) -> t -> 'a -> 'a
+val bwand : t -> t -> t
+val bwor : t -> t -> t
+val bwxor : t -> t -> t
+val bwnot: t -> t
+
+(*i
+val shiftl : t -> int -> t
+val shiftr : t -> int -> t
+i*)
+
+val all_zeros : t -> bool
+
+(*s {\bf Conversions to and from strings.} 
+    Least significant bit comes first. *)
+
+val to_string : t -> string
+val from_string : string -> t
 
 (*s Only if you know what you are doing... *)
 

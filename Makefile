@@ -39,7 +39,7 @@ bitv.tex: bitv.mli
 	ocamlweb -s --no-index bitv.mli -o $@
 
 bitv.dvi: bitv.tex
-	latex bitv
+	latex bitv && latex bitv
 
 bitv.ps.gz: bitv.dvi
 	dvips bitv.dvi -o

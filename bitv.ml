@@ -14,7 +14,7 @@
  * (enclosed in the file LGPL).
  *)
 
-(* $Id: bitv.ml,v 1.4 2000/02/24 18:34:53 filliatr Exp $ *)
+(* $Id: bitv.ml,v 1.5 2000/02/28 18:59:34 filliatr Exp $ *)
 
 (*s Bit vectors. The interface and part of the code are borrowed from the 
     [Array] module of the ocaml standard library (but things are simplified
@@ -30,11 +30,11 @@ let max_length = Sys.max_array_length * bpi
 (*s We represent a bit vector by a vector of integers, and we keep the
     information of the size of the bit vector since it can not be found out
     with the size of the array. 
-    [true] is represented by 1 and [false] by 0, as usual. *)
+    Bit 1 is represented by [true] and bit 0 by [false], as usual. *)
 
-type t =
-    { length : int;      (* length of the vector *)
-      bits   : int array (* bits array *) }
+type t = {
+  length : int;      (* length of the vector *)
+  bits   : int array (* bits array *) }
 
 let create n b =
   let s = let s = n / bpi in if n mod bpi = 0 then s else succ s in
@@ -89,6 +89,7 @@ let copy v =
   { length = v.length;
     bits = Array.copy v.bits }
 
+(*i OPTIM i*)
 let append v1 v2 =
   let l1 = v1.length 
   and l2 = v2.length in
@@ -110,6 +111,7 @@ let concat vl =
     vl;
   res
 
+(*i OPTIM i*)
 let sub v ofs len =
   if ofs < 0 or len < 0 or ofs + len > v.length then invalid_arg "Bitv.sub";
   let r = create len false in
@@ -120,6 +122,7 @@ let fill v ofs len b =
   if ofs < 0 or len < 0 or ofs + len > v.length then invalid_arg "Bitv.fill";
   for i = ofs to ofs + len - 1 do unsafe_set v i b done
 
+(*i OPTIM i*)
 let blit a1 ofs1 a2 ofs2 len =
   if len < 0 or ofs1 < 0 or ofs1 + len > length a1
              or ofs2 < 0 or ofs2 + len > length a2
@@ -170,3 +173,100 @@ let fold_right f v x =
     r := f (unsafe_get v i) !r
   done;
   !r
+
+(*s Bitwise operations. *)
+
+let bwand v1 v2 = 
+  let l = v1.length in
+  if l <> v2.length then invalid_arg "Bitv.bwand";
+  let b1 = v1.bits 
+  and b2 = v2.bits in
+  let n = Array.length b1 in
+  let a = Array.create n 0 in
+  for i = 0 to n - 1 do
+    a.(i) <- b1.(i) land b2.(i)
+  done;
+  { length = l; bits = a }
+  
+let bwor v1 v2 = 
+  let l = v1.length in
+  if l <> v2.length then invalid_arg "Bitv.bwor";
+  let b1 = v1.bits 
+  and b2 = v2.bits in
+  let n = Array.length b1 in
+  let a = Array.create n 0 in
+  for i = 0 to n - 1 do
+    a.(i) <- b1.(i) lor b2.(i)
+  done;
+  { length = l; bits = a }
+  
+let bwxor v1 v2 = 
+  let l = v1.length in
+  if l <> v2.length then invalid_arg "Bitv.bwxor";
+  let b1 = v1.bits 
+  and b2 = v2.bits in
+  let n = Array.length b1 in
+  let a = Array.create n 0 in
+  for i = 0 to n - 1 do
+    a.(i) <- b1.(i) lxor b2.(i)
+  done;
+  { length = l; bits = a }
+  
+let bwnot v = 
+  let b = v.bits in
+  let n = Array.length b in
+  let a = Array.create n 0 in
+  for i = 0 to n - 1 do
+    a.(i) <- lnot b.(i)
+  done;
+  { length = v.length; bits = a }
+
+(**
+let shiftl v m =
+  if m == 0 then 
+    copy v
+  else begin
+    let d = 
+  end
+  
+let shiftr v m =
+  if m == 0 then 
+    copy v
+  else begin
+
+  end
+  **)
+
+let all_zeros v = 
+  let b = v.bits in
+  let n = Array.length b in
+  let rec test i =
+    if i == n then
+      true
+    else
+      (Array.unsafe_get b i == 0) && test (succ i)
+  in
+  test 0
+
+(*s Conversions to and from strings. *)
+
+let to_string v = 
+  let n = v.length in
+  let s = String.make n '0' in
+  for i = 0 to n - 1 do
+    if unsafe_get v i then s.[i] <- '1'
+  done;
+  s
+
+let from_string s =
+  let n = String.length s in
+  let v = create n false in
+  for i = 0 to n - 1 do
+    let c = String.unsafe_get s i in
+    if c = '1' then 
+      unsafe_set v i true
+    else 
+      if c <> '0' then invalid_arg "Bitv.from_string"
+  done;
+  v
+

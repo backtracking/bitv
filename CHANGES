@@ -1,5 +1,7 @@
-
  
+ o documentation using ocamlweb
+ o to_string, from_string
+ o bitwise operations, all_zeros
 
 version 0.1:
  o first release
