@@ -14,28 +14,28 @@
  * (enclosed in the file LGPL).
  *)
 
-(* $Id: bitv.mli,v 1.1 1999/02/14 17:45:01 filliatr Exp $ *)
+(* $Id: bitv.mli,v 1.2 1999/02/14 22:28:12 filliatr Exp $ *)
 
 
 type t
-    (* The type of bit vectors. *)
+        (* The type of bit vectors. *)
 
 val create : int -> bool -> t
-    (* [Bitv.create n b] creates a new bit vector of length [n],
-     * initialized with [b]. *)
+        (* [Bitv.create n b] creates a new bit vector of length [n],
+         * initialized with [b]. *)
 
 val length : t -> int
-    (* Return the length (number of elements) of the given vector. *)
+        (* Return the length (number of elements) of the given vector. *)
 
 val set : t -> int -> bool -> unit
-    (* [Bitv.set v n b] sets the [n]th bit of [v] to the value [b]. *)
+        (* [Bitv.set v n b] sets the [n]th bit of [v] to the value [b]. *)
     
 val get : t -> int -> bool
-    (* [Bitv.get v n] returns the [n]th bit of [v]. *)
+        (* [Bitv.get v n] returns the [n]th bit of [v]. *)
 
 val init : int -> (int -> bool) -> t
-    (* [Array.init n f] returns a fresh vector of length [n],
-       with bit number [i] initialized to the result of [f i]. *)
+        (* [Array.init n f] returns a fresh vector of length [n],
+           with bit number [i] initialized to the result of [f i]. *)
 
 val copy: t -> t
         (* [Bitv.copy v] returns a copy of [v], that is, a fresh vector
@@ -96,9 +96,11 @@ val fold_right: (bool -> 'a -> 'a) -> t -> 'a -> 'a
            [f (get v 0) (f (get v 1) ( ... (f (get v (n-1)) x) ...))],
            where [n] is the length of the vector [v]. *)
 
+val max_length : int
+        (* Maximum length of a bit vector. System dependent. *)
 
 (* -- *)
 
 val unsafe_set : t -> int -> bool -> unit
 val unsafe_get : t -> int -> bool
-    (* Only if you know what you are doing... *)
+        (* Only if you know what you are doing... *)

@@ -14,7 +14,7 @@
  * (enclosed in the file LGPL).
  *)
 
-(* $Id: bitv.ml,v 1.1 1999/02/14 17:45:01 filliatr Exp $ *)
+(* $Id: bitv.ml,v 1.2 1999/02/14 22:28:10 filliatr Exp $ *)
 
 (* Bit vectors. The interface and part of the code are borrowed from the 
  * Array module of the ocaml standard library (but things are simplified
@@ -24,6 +24,8 @@ let bpi = Sys.word_size - 2  (* bits per int (30 or 62) *)
 
 let bit_j = Array.init bpi (fun j -> 1 lsl j)
 let bit_not_j = Array.init bpi (fun j -> max_int - bit_j.(j))
+
+let max_length = Sys.max_array_length * bpi
 
 (* We represent a bit vector by a vector of integers, and we keep the
  * information of the size of the bit vector since it can not be found out
