@@ -14,7 +14,7 @@
  * (enclosed in the file LGPL).
  *)
 
-(*i $Id: bitv.ml,v 1.12 2002/11/22 08:20:15 filliatr Exp $ i*)
+(*i $Id: bitv.ml,v 1.13 2003/04/03 10:38:57 filliatr Exp $ i*)
 
 (*s Bit vectors. The interface and part of the code are borrowed from the 
     [Array] module of the ocaml standard library (but things are simplified
@@ -439,7 +439,7 @@ let to_string v =
 
 let print fmt v = Format.pp_print_string fmt (to_string v)
 
-let from_string s =
+let of_string s =
   let n = String.length s in
   let v = create n false in
   for i = 0 to n - 1 do
@@ -447,7 +447,7 @@ let from_string s =
     if c = '1' then 
       unsafe_set v i true
     else 
-      if c <> '0' then invalid_arg "Bitv.from_string"
+      if c <> '0' then invalid_arg "Bitv.of_string"
   done;
   v
 
@@ -475,23 +475,23 @@ let gray_iter f n =
   if n > 0 then iter ()
 
 
-(*s Coercions to/from lists of intergers *)
+(*s Coercions to/from lists of integers *)
 
-let from_list l =
+let of_list l =
   let n = List.fold_left max 0 l in
   let b = create (succ n) false in
   let add_element i = 
     (* negative numbers are invalid *)
-    if i < 0 then invalid_arg "Bitv.from_list";
+    if i < 0 then invalid_arg "Bitv.of_list";
     unsafe_set b i true 
   in
   List.iter add_element l;
   b
 
-let from_list_with_length l len =
+let of_list_with_length l len =
   let b = create len false in
   let add_element i =
-    if i < 0 || i >= len then invalid_arg "Bitv.from_list_with_length";
+    if i < 0 || i >= len then invalid_arg "Bitv.of_list_with_length";
     unsafe_set b i true
   in
   List.iter add_element l;
@@ -504,4 +504,88 @@ let to_list b =
     else make (pred i) (if unsafe_get b i then i :: acc else acc)
   in
   make (pred n) []
+
+
+(*s To/from integers. *)
+
+(* [int] *)
+let of_int_us i = 
+  { length = bpi; bits = [| i land max_int |] }
+let to_int_us v = 
+  if v.length < bpi then invalid_arg "Bitv.to_int_us"; 
+  v.bits.(0)
+
+let of_int_s i = 
+  { length = succ bpi; bits = [| i land max_int; (i lsr bpi) land 1 |] }
+let to_int_s v = 
+  if v.length < succ bpi then invalid_arg "Bitv.to_int_us"; 
+  v.bits.(0) lor (v.bits.(1) lsl bpi)
+
+(* [Int32] *)
+let of_int32_us i = match Sys.word_size with
+  | 32 -> { length = 31; 
+	    bits = [| (Int32.to_int i) land max_int; 
+		      let hi = Int32.shift_right_logical i 30 in
+		      (Int32.to_int hi) land 1 |] }
+  | 64 -> { length = 31; bits = [| (Int32.to_int i) land 0x7fffffff |] }
+  | _ -> assert false
+let to_int32_us v =
+  if v.length < 31 then invalid_arg "Bitv.to_int32_us"; 
+  match Sys.word_size with
+    | 32 -> 
+	Int32.logor (Int32.of_int v.bits.(0))
+	            (Int32.shift_left (Int32.of_int (v.bits.(1) land 1)) 30)
+    | 64 ->
+	Int32.of_int (v.bits.(0) land 0x7fffffff)
+    | _ -> assert false
+
+let of_int32_s i = match Sys.word_size with
+  | 32 -> { length = 32; 
+	    bits = [| (Int32.to_int i) land max_int; 
+		      let hi = Int32.shift_right_logical i 30 in
+		      (Int32.to_int hi) land 3 |] }
+  | 64 -> { length = 32; bits = [| (Int32.to_int i) land 0xffffffff |] }
+  | _ -> assert false
+let to_int32_s v =
+  if v.length < 32 then invalid_arg "Bitv.to_int32_s"; 
+  match Sys.word_size with
+    | 32 -> 
+	Int32.logor (Int32.of_int v.bits.(0))
+	            (Int32.shift_left (Int32.of_int (v.bits.(1) land 3)) 30)
+    | 64 ->
+	Int32.of_int (v.bits.(0) land 0xffffffff)
+    | _ -> assert false
+
+(* [Int64] *)
+let of_int64_us i = match Sys.word_size with
+  | 32 -> { length = 63; 
+	    bits = [| (Int64.to_int i) land max_int; 
+		      (let mi = Int64.shift_right_logical i 30 in
+		       (Int64.to_int mi) land max_int);
+		      let hi = Int64.shift_right_logical i 60 in
+		      (Int64.to_int hi) land 1 |] }
+  | 64 -> { length = 63; 
+	    bits = [| (Int64.to_int i) land max_int;
+		      let hi = Int64.shift_right_logical i 62 in 
+		      (Int64.to_int hi) land 1 |] }
+  | _ -> assert false
+let to_int64_us v = failwith "todo"
+
+let of_int64_s i = failwith "todo"
+let to_int64_s v = failwith "todo"
+
+(* [Nativeint] *)
+let select_of f32 f64 = match Sys.word_size with 
+  | 32 -> (fun i -> f32 (Nativeint.to_int32 i))
+  | 64 -> (fun i -> f64 (Int64.of_nativeint i))
+  | _ -> assert false
+let of_nativeint_s = select_of of_int32_s of_int64_s
+let of_nativeint_us = select_of of_int32_us of_int64_us
+let select_to f32 f64 = match Sys.word_size with 
+  | 32 -> (fun i -> Nativeint.of_int32 (f32 i))
+  | 64 -> (fun i -> Int64.to_nativeint (f64 i))
+  | _ -> assert false
+let to_nativeint_s = select_to to_int32_s to_int64_s
+let to_nativeint_us = select_to to_int32_us to_int64_us
+
 
