@@ -38,7 +38,7 @@ MINORVN=1
 VERSION=$(MAJORVN).$(MINORVN)
 NAME=bitv-$(VERSION)
 
-SOURCES = bitv.mli bitv.ml Makefile README COPYING LGPL
+SOURCES = bitv.mli bitv.ml Makefile .depend README COPYING LGPL
 
 FTP=$(HOME)/WWW/ftp/ocaml/bitv
 
