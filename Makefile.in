@@ -39,7 +39,7 @@ bitv.dvi: bitv.tex
 
 bitv.ps.gz: bitv.dvi
 	dvips bitv.dvi -o
-	gzip --best bitv.ps
+	gzip -f --best bitv.ps
 
 # export
 ########
