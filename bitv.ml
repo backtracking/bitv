@@ -14,7 +14,7 @@
  * (enclosed in the file LGPL).
  *)
 
-(*i $Id: bitv.ml,v 1.15 2004/07/13 12:53:09 filliatr Exp $ i*)
+(*i $Id: bitv.ml,v 1.16 2005/02/18 13:22:53 filliatr Exp $ i*)
 
 (*s Bit vectors. The interface and part of the code are borrowed from the 
     [Array] module of the ocaml standard library (but things are simplified
@@ -339,6 +339,16 @@ let foldi_right f v x =
     r := f i (unsafe_get v i) !r
   done;
   !r
+
+let iteri_true f v =
+  Array.iteri 
+    (fun i n -> if n != 0 then begin
+       let i_bpi = i * bpi in
+       for j = 0 to bpi - 1 do
+	 if n land (Array.unsafe_get bit_j j) > 0 then f (i_bpi + j)
+       done
+     end) 
+    v.bits
 
 (*s Bitwise operations. It is straigthforward, since bitwise operations
     can be realized by the corresponding bitwise operations over integers.

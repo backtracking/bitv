@@ -1,4 +1,7 @@
 
+version 0.6, 18/02/2005
+=======================
+ o added iteri_true
  o added foldi_left and foldi_right
  o patch for ocaml >= 3.08 (0xffffffff is not more accepted as a literal)
  o fixed Invalid_argument messages (now exactly the function name)
