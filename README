@@ -1,0 +1,25 @@
+
+This is a quick bit vectors library for Objective Caml,
+distributed under the terms of the GNU LGPL (see the file LGPL).
+
+Installation:
+-------------
+
+1. Compile it with
+
+	make all
+
+  (If your platform doesn't support native-code, then compile with "make byte")
+
+2. Install it (with the ocaml standard library) with
+
+	make install
+
+   (If your platform doesn't support native-code, then install with
+    "make install-byte")
+
+Bug reports:
+------------
+
+Please send bug reports to Jean-Christophe.Filliatre@lri.fr
+
