@@ -40,7 +40,7 @@ NAME=bitv-$(VERSION)
 
 SOURCES = bitv.mli bitv.ml Makefile
 
-FTP=$(HOME)/WWW/ftp/soft/bitv
+FTP=$(HOME)/WWW/ftp/ocaml/bitv
 
 export:
 	mkdir -p $(NAME)
