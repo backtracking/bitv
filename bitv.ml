@@ -14,7 +14,7 @@
  * (enclosed in the file LGPL).
  *)
 
-(*i $Id: bitv.ml,v 1.8 2001/01/25 10:34:42 filliatr Exp $ i*)
+(*i $Id: bitv.ml,v 1.9 2001/10/02 12:16:31 filliatr Exp $ i*)
 
 (*s Bit vectors. The interface and part of the code are borrowed from the 
     [Array] module of the ocaml standard library (but things are simplified
@@ -449,3 +449,25 @@ let from_string s =
   done;
   v
 
+(*s Iteration on all bit vectors of length [n] using a Gray code. *)
+
+let first_set v n = 
+  let rec lookup i = 
+    if i = n then raise Not_found ;
+    if unsafe_get v i then i else lookup (i + 1)
+  in 
+  lookup 0
+
+let gray_iter f n = 
+  let bv = create n false in 
+  let rec iter () =
+    f bv; 
+    unsafe_set bv 0 (not (unsafe_get bv 0));
+    f bv; 
+    let pos = succ (first_set bv n) in
+    if pos < n then begin
+      unsafe_set bv pos (not (unsafe_get bv pos));
+      iter ()
+    end
+  in
+  if n > 0 then iter ()
