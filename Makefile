@@ -47,7 +47,7 @@ export:
 	cp $(SOURCES) $(NAME)
 	tar cf $(NAME).tar $(NAME)
 	gzip -f --best $(NAME).tar
-	cp -f README COPYING LGPL CHANGES $(NAME).tar.gz $(FTP)
+	cp -f README COPYING LGPL $(MLI) $(NAME).tar.gz $(FTP)
 
 # generic rules :
 #################
