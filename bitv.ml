@@ -14,7 +14,7 @@
  * (enclosed in the file LGPL).
  *)
 
-(* $Id: bitv.ml,v 1.7 2000/05/31 22:14:19 filliatr Exp $ *)
+(*i $Id: bitv.ml,v 1.8 2001/01/25 10:34:42 filliatr Exp $ i*)
 
 (*s Bit vectors. The interface and part of the code are borrowed from the 
     [Array] module of the ocaml standard library (but things are simplified
