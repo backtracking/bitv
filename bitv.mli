@@ -14,7 +14,7 @@
  * (enclosed in the file LGPL).
  *)
 
-(*i $Id: bitv.mli,v 1.8 2002/11/22 08:10:43 filliatr Exp $ i*)
+(*i $Id: bitv.mli,v 1.9 2002/11/22 08:20:15 filliatr Exp $ i*)
 
 (*s {\bf Module Bitv}.
     This module implements bit vectors, as an abstract datatype [t]. 
@@ -151,6 +151,7 @@ val all_ones  : t -> bool
 
 val to_string : t -> string
 val from_string : string -> t
+val print : Format.formatter -> t -> unit
 
 (*s {\bf Conversions to and from lists of integers.} *)
 

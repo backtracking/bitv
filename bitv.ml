@@ -14,7 +14,7 @@
  * (enclosed in the file LGPL).
  *)
 
-(*i $Id: bitv.ml,v 1.11 2002/11/22 08:10:43 filliatr Exp $ i*)
+(*i $Id: bitv.ml,v 1.12 2002/11/22 08:20:15 filliatr Exp $ i*)
 
 (*s Bit vectors. The interface and part of the code are borrowed from the 
     [Array] module of the ocaml standard library (but things are simplified
@@ -437,6 +437,8 @@ let to_string v =
   done;
   s
 
+let print fmt v = Format.pp_print_string fmt (to_string v)
+
 let from_string s =
   let n = String.length s in
   let v = create n false in
@@ -480,16 +482,18 @@ let from_list l =
   let b = create (succ n) false in
   let add_element i = 
     (* negative numbers are invalid *)
-    if i < 0 then invalid_arg "Bitv.from_list"
-    else unsafe_set b i true in
+    if i < 0 then invalid_arg "Bitv.from_list";
+    unsafe_set b i true 
+  in
   List.iter add_element l;
   b
 
 let from_list_with_length l len =
   let b = create len false in
   let add_element i =
-    if (i < 0 || i>= len) then invalid_arg "Bitv.from_list_with_length"
-    else unsafe_set b i true in
+    if i < 0 || i >= len then invalid_arg "Bitv.from_list_with_length";
+    unsafe_set b i true
+  in
   List.iter add_element l;
   b
 

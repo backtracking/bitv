@@ -1,6 +1,7 @@
 
 version 0.5, 22/11/2002
 =======================
+ o added print : formatter -> t -> unit
  o from_list now fails on negative indexes (patch from Karl Zilles)
  o from_list_with_length to specify the length (patch from Karl Zilles)
 
