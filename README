@@ -5,18 +5,17 @@ distributed under the terms of the GNU LGPL (see the file LGPL).
 Installation:
 -------------
 
-1. Compile it with
+1. Configure with
 
-	make all
+	./configure
 
-  (If your platform doesn't support native-code, then compile with "make byte")
+2. Compile with
 
-2. Install it (with the ocaml standard library) with
+	make
+
+2. Install (into the ocaml standard library) with
 
 	make install
-
-   (If your platform doesn't support native-code, then install with
-    "make install-byte")
 
 Bug reports:
 ------------

@@ -11,17 +11,19 @@ OBJS = $(CMO:.cmo=.o)
 BYTEFILES = $(CMO) $(CMI) $(MLI)
 OPTFILES = $(CMX) $(OBJS) 
 
-all: byte opt
+all: @OCAMLBEST@
 
 byte: $(CMO)
-opt:  $(CMX)
 
-install: install-byte install-opt
+opt: $(CMO) $(CMX)
+
+install: install-@OCAMLBEST@
 
 install-byte:
 	cp -f $(BYTEFILES) $(LIBDIR)
 
 install-opt:
+	cp -f $(BYTEFILES) $(LIBDIR)
 	cp -f $(OPTFILES) $(LIBDIR)
 
 # l.p.
@@ -47,7 +49,8 @@ MINORVN=3
 VERSION=$(MAJORVN).$(MINORVN)
 NAME=bitv-$(VERSION)
 
-SOURCES = bitv.mli bitv.ml Makefile .depend README COPYING LGPL CHANGES
+SOURCES = bitv.mli bitv.ml Makefile.in configure .depend \
+          README COPYING LGPL CHANGES
 
 FTP=$(HOME)/WWW/ftp/ocaml/ds
 
