@@ -14,7 +14,7 @@
  * (enclosed in the file LGPL).
  *)
 
-(*i $Id: bitv.mli,v 1.9 2002/11/22 08:20:15 filliatr Exp $ i*)
+(*i $Id: bitv.mli,v 1.10 2002/11/22 08:25:47 filliatr Exp $ i*)
 
 (*s {\bf Module Bitv}.
     This module implements bit vectors, as an abstract datatype [t]. 
@@ -119,7 +119,7 @@ val fold_right : (bool -> 'a -> 'a) -> t -> 'a -> 'a
 
 (*s [gray_iter f n] iterates function [f] on all bit vectors
     of length [n], once each, using a Gray code. The order in which
-    bit vectors are processed in unspecified. *)
+    bit vectors are processed is unspecified. *)
 
 val gray_iter : (t -> unit) -> int -> unit
 
