@@ -14,7 +14,7 @@
  * (enclosed in the file LGPL).
  *)
 
-(* $Id: bitv.ml,v 1.2 1999/02/14 22:28:10 filliatr Exp $ *)
+(* $Id: bitv.ml,v 1.3 1999/03/18 17:34:05 filliatr Exp $ *)
 
 (* Bit vectors. The interface and part of the code are borrowed from the 
  * Array module of the ocaml standard library (but things are simplified
@@ -64,7 +64,7 @@ let unsafe_get v n =
 (* Safe operations *)
 
 let set v n b =
-  if n >= v.length then invalid_arg "Bitv.set";
+  if n < 0 or n >= v.length then invalid_arg "Bitv.set";
   let (i,j) = pos n in
   if b then
     Array.unsafe_set v.bits i
