@@ -1,4 +1,8 @@
 
+version 0.3, 31/5/2000
+======================
+ o fixed bug in bw_not thanks to Damir Jamsek
+
 version 0.2, 24/4/2000
 ======================
  o normalization, so that generic equality can be used

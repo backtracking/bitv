@@ -14,7 +14,7 @@
  * (enclosed in the file LGPL).
  *)
 
-(* $Id: bitv.ml,v 1.6 2000/04/24 23:20:30 filliatr Exp $ *)
+(* $Id: bitv.ml,v 1.7 2000/05/31 22:14:19 filliatr Exp $ *)
 
 (*s Bit vectors. The interface and part of the code are borrowed from the 
     [Array] module of the ocaml standard library (but things are simplified
@@ -372,7 +372,7 @@ let bw_not v =
   let n = Array.length b in
   let a = Array.create n 0 in
   for i = 0 to n - 1 do
-    a.(i) <- lnot b.(i)
+    a.(i) <- max_int land (lnot b.(i))
   done;
   let r = { length = v.length; bits = a } in
   normalize r;
