@@ -62,7 +62,7 @@ export:: bitv.ps.gz
 	cp $(SOURCES) export/$(NAME)
 	(cd export; tar cf $(NAME).tar $(NAME); \
 	gzip -f --best $(NAME).tar)
-	cp -f $(MLI) export/$(NAME).tar.gz $(FTP)
+	cp -f bitv.ml bitv.mli export/$(NAME).tar.gz $(FTP)
 	cp -f bitv.ps.gz $(FTP)
 
 # generic rules :
