@@ -1,4 +1,9 @@
 
+version 0.5, 22/11/2002
+=======================
+ o from_list now fails on negative indexes (patch from Karl Zilles)
+ o from_list_with_length to specify the length (patch from Karl Zilles)
+
 version 0.4, 29/8/2002
 ======================
  o to_list/from_list to convert to/from lists of integers

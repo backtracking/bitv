@@ -14,7 +14,7 @@
  * (enclosed in the file LGPL).
  *)
 
-(*i $Id: bitv.mli,v 1.7 2002/08/29 12:15:08 filliatr Exp $ i*)
+(*i $Id: bitv.mli,v 1.8 2002/11/22 08:10:43 filliatr Exp $ i*)
 
 (*s {\bf Module Bitv}.
     This module implements bit vectors, as an abstract datatype [t]. 
@@ -156,6 +156,7 @@ val from_string : string -> t
 
 val to_list : t -> int list
 val from_list : int list -> t
+val from_list_with_length : int list -> int -> t
 
 (*s Only if you know what you are doing... *)
 
