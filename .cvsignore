@@ -3,3 +3,5 @@ bitv.tex
 config.cache
 config.status
 Makefile
+bitv.ps.gz
+test.ml
