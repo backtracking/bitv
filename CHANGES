@@ -1,4 +1,8 @@
 
+version 0.4, 29/8/2002
+======================
+ o to_list/from_list to convert to/from lists of integers
+ o added gray_iter to iterate over all bit vectors of length n
  o configuration with autoconf
 
 version 0.3, 31/5/2000

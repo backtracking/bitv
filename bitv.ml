@@ -14,7 +14,7 @@
  * (enclosed in the file LGPL).
  *)
 
-(*i $Id: bitv.ml,v 1.9 2001/10/02 12:16:31 filliatr Exp $ i*)
+(*i $Id: bitv.ml,v 1.10 2002/08/29 12:15:08 filliatr Exp $ i*)
 
 (*s Bit vectors. The interface and part of the code are borrowed from the 
     [Array] module of the ocaml standard library (but things are simplified
@@ -471,3 +471,21 @@ let gray_iter f n =
     end
   in
   if n > 0 then iter ()
+
+
+(*s Coercions to/from lists of intergers *)
+
+let from_list l =
+  let n = List.fold_left max 0 l in
+  let b = create (succ n) false in
+  List.iter (fun i -> unsafe_set b i true) l;
+  b
+
+let to_list b =
+  let n = length b in
+  let rec make i acc = 
+    if i < 0 then acc 
+    else make (pred i) (if unsafe_get b i then i :: acc else acc)
+  in
+  make (pred n) []
+

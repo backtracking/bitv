@@ -14,7 +14,7 @@
  * (enclosed in the file LGPL).
  *)
 
-(*i $Id: bitv.mli,v 1.6 2001/01/25 10:34:56 filliatr Exp $ i*)
+(*i $Id: bitv.mli,v 1.7 2002/08/29 12:15:08 filliatr Exp $ i*)
 
 (*s {\bf Module Bitv}.
     This module implements bit vectors, as an abstract datatype [t]. 
@@ -117,6 +117,12 @@ val mapi : (int -> bool -> bool) -> t -> t
 val fold_left : ('a -> bool -> 'a) -> 'a -> t -> 'a
 val fold_right : (bool -> 'a -> 'a) -> t -> 'a -> 'a
 
+(*s [gray_iter f n] iterates function [f] on all bit vectors
+    of length [n], once each, using a Gray code. The order in which
+    bit vectors are processed in unspecified. *)
+
+val gray_iter : (t -> unit) -> int -> unit
+
 (*s {\bf Bitwise operations.} \label{bitwise} [bwand], [bwor] and
     [bwxor] implement logical and, or and exclusive or.  They return
     fresh vectors and raise [Invalid_argument "Bitv.xxx"] if the two
@@ -145,6 +151,11 @@ val all_ones  : t -> bool
 
 val to_string : t -> string
 val from_string : string -> t
+
+(*s {\bf Conversions to and from lists of integers.} *)
+
+val to_list : t -> int list
+val from_list : int list -> t
 
 (*s Only if you know what you are doing... *)
 
