@@ -61,6 +61,7 @@ export:: bitv.ps.gz $(SOURCES)
 	gzip -f --best $(NAME).tar)
 	cp -f bitv.ml bitv.mli export/$(NAME).tar.gz $(FTP)
 	cp -f bitv.ps.gz $(FTP)
+	caml2html -d $(FTP) bitv.ml bitv.mli
 
 # generic rules :
 #################
