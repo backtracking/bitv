@@ -42,7 +42,7 @@ SOURCES = bitv.mli bitv.ml Makefile README COPYING LGPL
 
 FTP=$(HOME)/WWW/ftp/ocaml/bitv
 
-export:
+export::
 	mkdir -p export/$(NAME)
 	cp $(SOURCES) export/$(NAME)
 	(cd export; tar cf $(NAME).tar $(NAME); \
