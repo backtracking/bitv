@@ -38,16 +38,16 @@ MINORVN=1
 VERSION=$(MAJORVN).$(MINORVN)
 NAME=bitv-$(VERSION)
 
-SOURCES = bitv.mli bitv.ml Makefile
+SOURCES = bitv.mli bitv.ml Makefile README COPYING LGPL
 
 FTP=$(HOME)/WWW/ftp/ocaml/bitv
 
 export:
-	mkdir -p $(NAME)
-	cp $(SOURCES) $(NAME)
-	tar cf $(NAME).tar $(NAME)
-	gzip -f --best $(NAME).tar
-	cp -f README COPYING LGPL $(MLI) $(NAME).tar.gz $(FTP)
+	mkdir -p export/$(NAME)
+	cp $(SOURCES) export/$(NAME)
+	(cd export; tar cf $(NAME).tar $(NAME); \
+	gzip -f --best $(NAME).tar)
+	cp -f README COPYING LGPL $(MLI) export/$(NAME).tar.gz $(FTP)
 
 # generic rules :
 #################
