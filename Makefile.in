@@ -1,12 +1,6 @@
-#########################################
-# Configuration part : where to install
-#########################################
 
-LIBDIR = /usr/local/lib/ocaml
-
-#########################################
-# End of configuration part
-#########################################
+# where to install
+LIBDIR = @OCAMLLIB@
 
 CMO = bitv.cmo
 CMI = $(CMO:.cmo=.cmi)
@@ -36,7 +30,7 @@ install-opt:
 doc: bitv.dvi
 
 bitv.tex: bitv.mli
-	ocamlweb -s --no-index bitv.mli -o $@
+	@OCAMLWEB@ -s --no-index bitv.mli -o $@
 
 bitv.dvi: bitv.tex
 	latex bitv && latex bitv
@@ -68,8 +62,8 @@ export:: bitv.ps.gz $(SOURCES)
 # generic rules :
 #################
 
-CAMLC = ocamlc
-CAMLCOPT = ocamlopt
+CAMLC = @OCAMLC@
+CAMLCOPT = @OCAMLOPT@
 FLAGS=
 
 .SUFFIXES: .mli .ml .cmi .cmo .cmx
@@ -86,6 +80,16 @@ FLAGS=
 .ml.cmx:
 	$(CAMLCOPT) -c $(FLAGS) $<
 
+# myself
+
+Makefile: Makefile.in config.status
+	./config.status
+
+config.status: configure
+	./config.status --recheck
+
+configure: configure.in
+	autoconf 
 
 # clean and depend
 ##################
@@ -96,7 +100,7 @@ clean:
 
 depend:
 	rm -f .depend
-	ocamldep *.mli *.ml > .depend
+	@OCAMLDEP@ *.mli *.ml > .depend
 
 include .depend
 
