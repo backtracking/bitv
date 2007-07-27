@@ -1,6 +1,5 @@
 
-This is a quick bit vectors library for Objective Caml,
-distributed under the terms of the GNU LGPL (see the file LGPL).
+This is a quick bit vectors library for Objective Caml.
 
 Installation:
 -------------

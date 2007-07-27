@@ -1,20 +1,19 @@
-(*
- * Bit vectors.
- * Copyright (C) 1999 Jean-Christophe FILLIATRE
- * 
- * This software is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Library General Public
- * License version 2, as published by the Free Software Foundation.
- * 
- * This software is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * 
- * See the GNU Library General Public License version 2 for more details
- * (enclosed in the file LGPL).
- *)
+(**************************************************************************)
+(*                                                                        *)
+(*  Copyright (C) Jean-Christophe Filliatre                               *)
+(*                                                                        *)
+(*  This software is free software; you can redistribute it and/or        *)
+(*  modify it under the terms of the GNU Library General Public           *)
+(*  License version 2, with the special exception on linking              *)
+(*  described in file LICENSE.                                            *)
+(*                                                                        *)
+(*  This software is distributed in the hope that it will be useful,      *)
+(*  but WITHOUT ANY WARRANTY; without even the implied warranty of        *)
+(*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.                  *)
+(*                                                                        *)
+(**************************************************************************)
 
-(*i $Id: bitv.ml,v 1.16 2005/02/18 13:22:53 filliatr Exp $ i*)
+(*i $Id: bitv.ml,v 1.17 2007/07/27 08:35:12 filliatr Exp $ i*)
 
 (*s Bit vectors. The interface and part of the code are borrowed from the 
     [Array] module of the ocaml standard library (but things are simplified
