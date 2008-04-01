@@ -25,11 +25,14 @@ OBJS = $(CMO:.cmo=.o)
 BYTEFILES = $(CMO) $(CMI) $(MLI)
 OPTFILES = $(CMX) $(OBJS) 
 
-all: @OCAMLBEST@
+all: @OCAMLBEST@ test
 
 byte: $(CMO)
 
 opt: $(CMO) $(CMX)
+
+test:
+	ocaml test.ml
 
 install: install-@OCAMLBEST@
 
