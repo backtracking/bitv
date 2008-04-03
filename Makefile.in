@@ -62,7 +62,7 @@ bitv.ps.gz: bitv.dvi
 ########
 
 MAJORVN=0
-MINORVN=6
+MINORVN=7
 VERSION=$(MAJORVN).$(MINORVN)
 NAME=bitv-$(VERSION)
 
