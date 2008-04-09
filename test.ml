@@ -42,3 +42,21 @@ let test_iteri_true n =
 let () = 
   for n = 0 to 1700 do test_iteri_true n done
 
+(* shifts *)
+
+let () =
+  let v = of_string "110101110" in
+  assert (shiftl v 1 = of_string "011010111");
+  assert (shiftl v (-1) = of_string "101011100");
+  assert (shiftr v 1 = of_string "101011100")
+
+let test_shift n =
+  let v = init n (fun _ -> Random.bool ()) in
+  let k = Random.int n in
+  let w = shiftr v k in
+  for i = 0 to n-1-k do assert (get v (k+i) = get w i) done;
+  for i = n-k to n-1 do assert (get w i = false) done
+
+let () =
+  for n = 1 to 200 do test_shift n done
+
