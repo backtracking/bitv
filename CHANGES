@@ -1,4 +1,7 @@
 
+ o improved implementation of iteri_true (on 32-bit architecture only, 
+   old implementation for other architectures)
+
 version 0.7, 03/04/2008
 =======================
  o fixed bug with unsafe_blit when len=0 (could affect blit, sub, append, 

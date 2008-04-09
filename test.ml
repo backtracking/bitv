@@ -1,5 +1,7 @@
 (* tests *)
 
+open Format;;
+
 #load "bitv.cmo";;
 open Bitv;;
 #install_printer print;;
@@ -30,3 +32,13 @@ let () = assert (to_string v = "111100000000000111111111111111");;
 let s = sub v 2 4;;
 let () = assert (bw_not (bw_not s) = s);;
 let () = assert (bw_and e e = e);;
+
+(* iteri_true *)
+let test_iteri_true n =
+  let k = 1 + Random.int 5 in
+  let v = init n (fun i -> i mod k = 0) in
+  iteri_true (fun i -> assert (i mod k = 0)) v
+
+let () = 
+  for n = 0 to 1700 do test_iteri_true n done
+

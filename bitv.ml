@@ -13,7 +13,7 @@
 (*                                                                        *)
 (**************************************************************************)
 
-(*i $Id: bitv.ml,v 1.18 2008/04/01 09:59:03 filliatr Exp $ i*)
+(*i $Id: bitv.ml,v 1.19 2008/04/09 08:33:50 filliatr Exp $ i*)
 
 (*s Bit vectors. The interface and part of the code are borrowed from the 
     [Array] module of the ocaml standard library (but things are simplified
@@ -342,7 +342,7 @@ let foldi_right f v x =
   done;
   !r
 
-let iteri_true f v =
+let iteri_true_naive f v =
   Array.iteri 
     (fun i n -> if n != 0 then begin
        let i_bpi = i * bpi in
@@ -351,6 +351,31 @@ let iteri_true f v =
        done
      end) 
     v.bits
+
+(*s Number of trailing zeros (on a 32-bit machine) *)
+
+let hash x = ((0x34ca8b09 * x) land 0x3fffffff) lsr 24
+let ntz_arr = Array.create 64 0
+let () = for i = 0 to 30 do ntz_arr.(hash (1 lsl i)) <- i done
+let ntz x = if x == 0 then 31 else ntz_arr.(hash (x land (-x)))
+
+let iteri_true_ntz32 f v =
+  Array.iteri 
+    (fun i n -> 
+       let i_bpi = i * bpi in
+       let rec visit x =
+	 if x != 0 then begin
+	   let b = x land (-x) in
+	   f (i_bpi + ntz b);
+	   visit (x - b)
+	 end
+       in
+       visit n) 
+    v.bits
+
+let iteri_true = match Sys.word_size with
+  | 32 -> iteri_true_ntz32
+  | _  -> iteri_true_naive
 
 (*s Bitwise operations. It is straigthforward, since bitwise operations
     can be realized by the corresponding bitwise operations over integers.

@@ -13,7 +13,7 @@
 (*                                                                        *)
 (**************************************************************************)
 
-(*i $Id: bitv.mli,v 1.14 2007/07/27 08:35:12 filliatr Exp $ i*)
+(*i $Id: bitv.mli,v 1.15 2008/04/09 08:33:50 filliatr Exp $ i*)
 
 (*s {\bf Module Bitv}.
     This module implements bit vectors, as an abstract datatype [t]. 
@@ -117,6 +117,10 @@ val fold_left : ('a -> bool -> 'a) -> 'a -> t -> 'a
 val fold_right : (bool -> 'a -> 'a) -> t -> 'a -> 'a
 val foldi_left : ('a -> int -> bool -> 'a) -> 'a -> t -> 'a
 val foldi_right : (int -> bool -> 'a -> 'a) -> t -> 'a -> 'a
+
+(*s [iteri_true f v] applies [f] to all indexes of the elements of [v] which
+    are set (i.e. [true]); indexes are visited from least significant to
+    most significant. *)
 
 val iteri_true : (int -> unit) -> t -> unit
 
