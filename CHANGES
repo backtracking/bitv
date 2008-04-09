@@ -1,4 +1,7 @@
 
+ o two different modules L and M for conversions to and from string (least
+   and most significant bits first, respectively); apologies for
+   API incompatibility
  o improved implementation of iteri_true (on 32-bit architecture only, 
    old implementation for other architectures)
 

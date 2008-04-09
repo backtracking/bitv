@@ -13,7 +13,7 @@
 (*                                                                        *)
 (**************************************************************************)
 
-(*i $Id: bitv.mli,v 1.16 2008/04/09 09:44:03 filliatr Exp $ i*)
+(*i $Id: bitv.mli,v 1.17 2008/04/09 12:53:06 filliatr Exp $ i*)
 
 (*s {\bf Module Bitv}.
     This module implements bit vectors, as an abstract datatype [t]. 
@@ -153,12 +153,23 @@ val shiftr : t -> int -> t
 val all_zeros : t -> bool
 val all_ones  : t -> bool
 
-(*s {\bf Conversions to and from strings.} 
-    Least significant bit comes first. *)
+(*s {\bf Conversions to and from strings.} *)
 
-val to_string : t -> string
-val of_string : string -> t
-val print : Format.formatter -> t -> unit
+(* With least significant bits first. *)
+
+module L : sig
+  val to_string : t -> string
+  val of_string : string -> t
+  val print : Format.formatter -> t -> unit
+end
+
+(* With most significant bits first. *)
+
+module M : sig
+  val to_string : t -> string
+  val of_string : string -> t
+  val print : Format.formatter -> t -> unit
+end
 
 (*s {\bf Conversions to and from lists of integers.} 
     The list gives the indices of bits which are set (ie [true]). *)

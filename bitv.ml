@@ -13,7 +13,7 @@
 (*                                                                        *)
 (**************************************************************************)
 
-(*i $Id: bitv.ml,v 1.19 2008/04/09 08:33:50 filliatr Exp $ i*)
+(*i $Id: bitv.ml,v 1.20 2008/04/09 12:53:06 filliatr Exp $ i*)
 
 (*s Bit vectors. The interface and part of the code are borrowed from the 
     [Array] module of the ocaml standard library (but things are simplified
@@ -480,28 +480,34 @@ let all_ones v =
 
 (*s Conversions to and from strings. *)
 
-let to_string v = 
-  let n = v.length in
-  let s = String.make n '0' in
-  for i = 0 to n - 1 do
-    if unsafe_get v i then s.[i] <- '1'
-  done;
-  s
+module S(I : sig val least_first : bool end) = struct
 
-let print fmt v = Format.pp_print_string fmt (to_string v)
+  let to_string v = 
+    let n = v.length in
+    let s = String.make n '0' in
+    for i = 0 to n - 1 do
+      if unsafe_get v i then s.[if I.least_first then i else n-1-i] <- '1'
+    done;
+    s
 
-let of_string s =
-  let n = String.length s in
-  let v = create n false in
-  for i = 0 to n - 1 do
-    let c = String.unsafe_get s i in
-    if c = '1' then 
-      unsafe_set v i true
-    else 
-      if c <> '0' then invalid_arg "Bitv.of_string"
-  done;
-  v
+  let print fmt v = Format.pp_print_string fmt (to_string v)
+    
+  let of_string s =
+    let n = String.length s in
+    let v = create n false in
+    for i = 0 to n - 1 do
+      let c = String.unsafe_get s i in
+      if c = '1' then 
+	unsafe_set v (if I.least_first then i else n-1-i) true
+      else 
+	if c <> '0' then invalid_arg "Bitv.of_string"
+    done;
+    v
 
+end
+module L = S(struct let least_first = true end)
+module M = S(struct let least_first = false end)
+    
 (*s Iteration on all bit vectors of length [n] using a Gray code. *)
 
 let first_set v n = 

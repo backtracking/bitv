@@ -4,6 +4,7 @@ open Format;;
 
 #load "bitv.cmo";;
 open Bitv;;
+open Bitv.M;;
 #install_printer print;;
 
 (* 0-length blitting *)
@@ -26,7 +27,7 @@ let () = assert (length w = 30);;
 let () = fill v 4 11 false;;
 let () = fill v 30 0 true;;
 let () = assert (length v = 30);;
-let () = assert (to_string v = "111100000000000111111111111111");;
+let () = assert (to_string v = "111111111111111000000000001111");;
 
 (* bitwise operations *)
 let s = sub v 2 4;;
@@ -46,9 +47,9 @@ let () =
 
 let () =
   let v = of_string "110101110" in
-  assert (shiftl v 1 = of_string "011010111");
-  assert (shiftl v (-1) = of_string "101011100");
-  assert (shiftr v 1 = of_string "101011100")
+  assert (shiftl v 1 = of_string "101011100");
+  assert (shiftl v (-1) = of_string "011010111");
+  assert (shiftr v 1 = of_string "011010111")
 
 let test_shift n =
   let v = init n (fun _ -> Random.bool ()) in
