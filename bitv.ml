@@ -13,7 +13,7 @@
 (*                                                                        *)
 (**************************************************************************)
 
-(*i $Id: bitv.ml,v 1.21 2009/03/17 09:09:38 filliatr Exp $ i*)
+(*i $Id: bitv.ml,v 1.22 2009/03/17 09:20:55 filliatr Exp $ i*)
 
 (*s Bit vectors. The interface and part of the code are borrowed from the 
     [Array] module of the ocaml standard library (but things are simplified
@@ -373,7 +373,10 @@ let iteri_true_ntz32 f v =
        visit n) 
     v.bits
 
-let hash64 x = ((0x03f79d71b4ca8b09 * x) land 0x3fffffffffffffff) lsr 56
+let martin_constant = (0x03f79d71b lsl 36) lor 0x4ca8b09 (*0x03f79d71b4ca8b09*)
+let mask62 = -min_int-1 (* 0x3fffffffffffffff *)
+
+let hash64 x = ((martin_constant * x) land mask62) lsr 56
 let ntz_arr64 = Array.create 64 0
 let () = for i = 0 to 62 do ntz_arr64.(hash64 (1 lsl i)) <- i done
 let ntz64 x = if x == 0 then 63 else ntz_arr64.(hash64 (x land (-x)))
