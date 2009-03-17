@@ -13,7 +13,7 @@
 (*                                                                        *)
 (**************************************************************************)
 
-(*i $Id: bitv.ml,v 1.22 2009/03/17 09:20:55 filliatr Exp $ i*)
+(*i $Id: bitv.ml,v 1.23 2009/03/17 09:17:07 filliatr Exp $ i*)
 
 (*s Bit vectors. The interface and part of the code are borrowed from the 
     [Array] module of the ocaml standard library (but things are simplified
@@ -355,7 +355,7 @@ let iteri_true_naive f v =
 (*s Number of trailing zeros (on a 32-bit machine) *)
 
 let hash32 x = ((0x34ca8b09 * x) land 0x3fffffff) lsr 24
-let ntz_arr32 = Array.create 32 0
+let ntz_arr32 = Array.create 64 0
 let () = for i = 0 to 30 do ntz_arr32.(hash32 (1 lsl i)) <- i done
 let ntz32 x = if x == 0 then 31 else ntz_arr32.(hash32 (x land (-x)))
 
