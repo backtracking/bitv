@@ -13,7 +13,7 @@
 (*                                                                        *)
 (**************************************************************************)
 
-(*i $Id: bitv.ml,v 1.20 2008/04/09 12:53:06 filliatr Exp $ i*)
+(*i $Id: bitv.ml,v 1.21 2009/03/17 09:09:38 filliatr Exp $ i*)
 
 (*s Bit vectors. The interface and part of the code are borrowed from the 
     [Array] module of the ocaml standard library (but things are simplified
@@ -354,10 +354,10 @@ let iteri_true_naive f v =
 
 (*s Number of trailing zeros (on a 32-bit machine) *)
 
-let hash x = ((0x34ca8b09 * x) land 0x3fffffff) lsr 24
-let ntz_arr = Array.create 64 0
-let () = for i = 0 to 30 do ntz_arr.(hash (1 lsl i)) <- i done
-let ntz x = if x == 0 then 31 else ntz_arr.(hash (x land (-x)))
+let hash32 x = ((0x34ca8b09 * x) land 0x3fffffff) lsr 24
+let ntz_arr32 = Array.create 32 0
+let () = for i = 0 to 30 do ntz_arr32.(hash32 (1 lsl i)) <- i done
+let ntz32 x = if x == 0 then 31 else ntz_arr32.(hash32 (x land (-x)))
 
 let iteri_true_ntz32 f v =
   Array.iteri 
@@ -366,7 +366,26 @@ let iteri_true_ntz32 f v =
        let rec visit x =
 	 if x != 0 then begin
 	   let b = x land (-x) in
-	   f (i_bpi + ntz b);
+	   f (i_bpi + ntz32 b);
+	   visit (x - b)
+	 end
+       in
+       visit n) 
+    v.bits
+
+let hash64 x = ((0x03f79d71b4ca8b09 * x) land 0x3fffffffffffffff) lsr 56
+let ntz_arr64 = Array.create 64 0
+let () = for i = 0 to 62 do ntz_arr64.(hash64 (1 lsl i)) <- i done
+let ntz64 x = if x == 0 then 63 else ntz_arr64.(hash64 (x land (-x)))
+
+let iteri_true_ntz64 f v =
+  Array.iteri 
+    (fun i n -> 
+       let i_bpi = i * bpi in
+       let rec visit x =
+	 if x != 0 then begin
+	   let b = x land (-x) in
+	   f (i_bpi + ntz64 b);
 	   visit (x - b)
 	 end
        in
@@ -375,7 +394,8 @@ let iteri_true_ntz32 f v =
 
 let iteri_true = match Sys.word_size with
   | 32 -> iteri_true_ntz32
-  | _  -> iteri_true_naive
+  | 64 -> iteri_true_ntz64
+  | _ -> assert false
 
 (*s Bitwise operations. It is straigthforward, since bitwise operations
     can be realized by the corresponding bitwise operations over integers.
