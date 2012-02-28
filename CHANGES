@@ -1,4 +1,6 @@
 
+version 0.8, 28/02/2012
+=======================
  o two different modules L and M for conversions to and from string (least
    and most significant bits first, respectively); apologies for
    API incompatibility
@@ -6,7 +8,7 @@
 
 version 0.7, 03/04/2008
 =======================
- o fixed bug with unsafe_blit when len=0 (could affect blit, sub, append, 
+ o fixed bug with unsafe_blit when len=0 (could affect blit, sub, append,
    concat and fill when used with 0-length bit vectors), thanks to Pat Rondon
 
 version 0.6, 18/02/2005

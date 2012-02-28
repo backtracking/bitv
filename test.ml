@@ -13,7 +13,7 @@ let () = blit v 0 v 30 0;;
 let () = assert (length v = 30);;
 
 (* 0-length extraction *)
-let e = sub v 30 0;; 
+let e = sub v 30 0;;
 let () = assert (length e = 0);;
 
 (* 0-length concatenation *)
@@ -40,7 +40,7 @@ let test_iteri_true n =
   let v = init n (fun i -> i mod k = 0) in
   iteri_true (fun i -> assert (i mod k = 0)) v
 
-let () = 
+let () =
   for n = 0 to 1700 do test_iteri_true n done
 
 (* shifts *)

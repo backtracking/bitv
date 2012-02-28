@@ -23,9 +23,9 @@ CMX = $(CMO:.cmo=.cmx)
 OBJS = $(CMO:.cmo=.o)
 
 BYTEFILES = $(CMO) $(CMI) $(MLI)
-OPTFILES = $(CMX) $(OBJS) 
+OPTFILES = $(CMX) $(OBJS)
 
-all: @OCAMLBEST@ 
+all: @OCAMLBEST@ test
 
 byte: $(CMO)
 
@@ -62,14 +62,14 @@ bitv.ps.gz: bitv.dvi
 ########
 
 MAJORVN=0
-MINORVN=7
+MINORVN=8
 VERSION=$(MAJORVN).$(MINORVN)
 NAME=bitv-$(VERSION)
 
 SOURCES = bitv.mli bitv.ml Makefile.in configure configure.in .depend \
           README COPYING LICENSE CHANGES
 
-FTP=$(HOME)/WWW/ftp/ocaml/ds
+FTP=/users/demons/filliatr/WWW/ftp/ocaml/ds
 
 export:: bitv.ps.gz $(SOURCES)
 	mkdir -p export/$(NAME)
@@ -110,7 +110,7 @@ config.status: configure
 	./config.status --recheck
 
 configure: configure.in
-	autoconf 
+	autoconf
 
 # clean and depend
 ##################
