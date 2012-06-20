@@ -37,11 +37,11 @@ test: bitv.cmo
 install: install-@OCAMLBEST@
 
 install-byte:
-	cp -f $(BYTEFILES) $(LIBDIR)
+	cp -f $(BYTEFILES) $(DESTDIR)$(LIBDIR)
 
 install-opt:
-	cp -f $(BYTEFILES) $(LIBDIR)
-	cp -f $(OPTFILES) $(LIBDIR)
+	cp -f $(BYTEFILES) $(DESTDIR)$(LIBDIR)
+	cp -f $(OPTFILES) $(DESTDIR)$(LIBDIR)
 
 # l.p.
 ######
@@ -62,11 +62,11 @@ bitv.ps.gz: bitv.dvi
 ########
 
 MAJORVN=0
-MINORVN=8
+MINORVN=9
 VERSION=$(MAJORVN).$(MINORVN)
 NAME=bitv-$(VERSION)
 
-SOURCES = bitv.mli bitv.ml Makefile.in configure configure.in .depend \
+SOURCES = bitv.mli bitv.ml test.ml Makefile.in configure configure.in .depend \
           README COPYING LICENSE CHANGES
 
 FTP=/users/demons/filliatr/WWW/ftp/ocaml/ds

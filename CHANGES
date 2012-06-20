@@ -1,4 +1,9 @@
 
+version 0.9, 20/06/2012
+=======================
+ o fixed tarball (test.ml was missing)
+ o patched installation to use $(DESTDIR), if any (patch from Bruno Guillaume)
+
 version 0.8, 28/02/2012
 =======================
  o two different modules L and M for conversions to and from string (least
