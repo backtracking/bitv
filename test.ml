@@ -61,6 +61,10 @@ let test_shift n =
 let () =
   for n = 1 to 200 do test_shift n done
 
+(* TODO conversions to/from integers *)
+
+(* input/output *)
+
 let test_io v =
   let f = Filename.temp_file "bv" "" in
   let c = open_out f in
