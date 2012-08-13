@@ -1,4 +1,8 @@
 
+  o new functions output_bin/input_bin for export/import in a
+    machine-independent way (contribution from Bruno Guillaume)
+  o fixed installation (patch from Bruno Guillaume)
+
 version 0.9, 20/06/2012
 =======================
  o fixed tarball (test.ml was missing)

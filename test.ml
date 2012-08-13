@@ -61,3 +61,15 @@ let test_shift n =
 let () =
   for n = 1 to 200 do test_shift n done
 
+let test_io v =
+  let f = Filename.temp_file "bv" "" in
+  let c = open_out f in
+  output_bin c v;
+  close_out c;
+  let c = open_in f in
+  let w = input_bin c in
+  close_in c;
+  assert (v = w)
+
+let () =
+  for n = 0 to 200 do test_io (init n (fun _ -> Random.bool ())) done

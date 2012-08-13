@@ -13,7 +13,7 @@
 (*                                                                        *)
 (**************************************************************************)
 
-(*i $Id: bitv.ml,v 1.24 2012/02/28 08:38:43 filliatr Exp $ i*)
+(*i $Id: bitv.ml,v 1.25 2012/08/13 14:00:01 filliatr Exp $ i*)
 
 (*s Bit vectors. The interface and part of the code are borrowed from the
     [Array] module of the ocaml standard library (but things are simplified
@@ -528,6 +528,36 @@ module S(I : sig val least_first : bool end) = struct
 end
 module L = S(struct let least_first = true end)
 module M = S(struct let least_first = false end)
+
+(*s Input/output in a machine-independent format. *)
+
+let output_bin out_ch v =
+  let len = length v in
+  let rec loop i pow byte =
+    let byte = if unsafe_get v i then byte lor pow else byte in
+    if i = len - 1 then
+      output_byte out_ch byte
+    else if i mod 8 = 7 then begin
+      output_byte out_ch byte;
+      loop (i + 1) 1 0
+    end else
+      loop (i + 1) (pow * 2) byte
+  in
+  output_binary_int out_ch len;
+  if len > 0 then loop 0 1 0
+
+let input_bin in_ch =
+  let len = input_binary_int in_ch in
+  let bits = create len false in
+  let rec loop i byte =
+    if i < len then begin
+      let byte = if i mod 8 = 0 then input_byte in_ch else byte in
+      if byte land 1 = 1 then unsafe_set bits i true;
+      loop (i+1) (byte / 2)
+    end
+  in
+  if len > 0 then loop 0 0;
+  bits
 
 (*s Iteration on all bit vectors of length [n] using a Gray code. *)
 

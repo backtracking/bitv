@@ -37,9 +37,11 @@ test: bitv.cmo
 install: install-@OCAMLBEST@
 
 install-byte:
+	mkdir -p $(DESTDIR)$(LIBDIR)
 	cp -f $(BYTEFILES) $(DESTDIR)$(LIBDIR)
 
 install-opt:
+	mkdir -p $(DESTDIR)$(LIBDIR)
 	cp -f $(BYTEFILES) $(DESTDIR)$(LIBDIR)
 	cp -f $(OPTFILES) $(DESTDIR)$(LIBDIR)
 
