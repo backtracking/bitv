@@ -13,15 +13,16 @@
 (*                                                                        *)
 (**************************************************************************)
 
-(*i $Id: bitv.mli,v 1.18 2012/08/13 14:00:01 filliatr Exp $ i*)
+(*i $Id: bitv.mli,v 1.19 2012/08/14 07:26:00 filliatr Exp $ i*)
 
 (*s {\bf Module Bitv}.
     This module implements bit vectors, as an abstract datatype [t].
     Since bit vectors are particular cases of arrays, this module provides
-    the same operations as the module [Array] (Sections~\ref{barray}
+    the same operations as module [Array] (Sections~\ref{barray}
     up to \ref{earray}). It also provides bitwise operations
-    (Section~\ref{bitwise}). In the following, [false] stands for the bit 0
-    and [true] for the bit 1. *)
+    (Section~\ref{bitwise}) and conversions to/from integer types.
+
+    In the following, [false] stands for bit 0 and [true] for bit 1. *)
 
 type t
 
@@ -193,7 +194,7 @@ val of_list_with_length : int list -> int -> t
     comes first (ie is at index 0 in the bit vector).
     [to_xxx] functions truncate when the bit vector is too wide,
     and raise [Invalid_argument] when it is too short.
-    Suffix [_s] indicates that sign bit is kept,
+    Suffix [_s] means that sign bit is kept,
     and [_us] that it is discarded. *)
 
 (* type [int] (length 31/63 with sign, 30/62 without) *)

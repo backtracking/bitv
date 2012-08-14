@@ -13,7 +13,7 @@
 (*                                                                        *)
 (**************************************************************************)
 
-(*i $Id: bitv.ml,v 1.25 2012/08/13 14:00:01 filliatr Exp $ i*)
+(*i $Id: bitv.ml,v 1.26 2012/08/14 07:26:00 filliatr Exp $ i*)
 
 (*s Bit vectors. The interface and part of the code are borrowed from the
     [Array] module of the ocaml standard library (but things are simplified
@@ -680,10 +680,42 @@ let of_int64_us i = match Sys.word_size with
 		      let hi = Int64.shift_right_logical i 62 in
 		      (Int64.to_int hi) land 1 |] }
   | _ -> assert false
-let to_int64_us v = failwith "todo"
+let to_int64_us v =
+  if v.length < 63 then invalid_arg "Bitv.to_int64_us";
+  match Sys.word_size with
+    | 32 ->
+	Int64.logor (Int64.of_int v.bits.(0))
+        (Int64.logor (Int64.shift_left (Int64.of_int v.bits.(1)) 30)
+                     (Int64.shift_left (Int64.of_int (v.bits.(2) land 7)) 60))
+    | 64 ->
+	Int64.logor (Int64.of_int v.bits.(0))
+                    (Int64.shift_left (Int64.of_int (v.bits.(1) land 1)) 62)
+    | _ ->
+        assert false
 
-let of_int64_s i = failwith "todo"
-let to_int64_s v = failwith "todo"
+let of_int64_s i = match Sys.word_size with
+  | 32 -> { length = 64;
+	    bits = [| (Int64.to_int i) land max_int;
+		      (let mi = Int64.shift_right_logical i 30 in
+		       (Int64.to_int mi) land max_int);
+		      let hi = Int64.shift_right_logical i 60 in
+		      (Int64.to_int hi) land 3 |] }
+  | 64 -> { length = 64;
+            bits = [| (Int64.to_int i) land max_int;
+                      let hi = Int64.shift_right_logical i 62 in
+		      (Int64.to_int hi) land 3 |] }
+  | _ -> assert false
+let to_int64_s v =
+  if v.length < 64 then invalid_arg "Bitv.to_int64_s";
+  match Sys.word_size with
+    | 32 ->
+	Int64.logor (Int64.of_int v.bits.(0))
+        (Int64.logor (Int64.shift_left (Int64.of_int v.bits.(1)) 30)
+                     (Int64.shift_left (Int64.of_int (v.bits.(2) land 15)) 60))
+    | 64 ->
+	Int64.logor (Int64.of_int v.bits.(0))
+                    (Int64.shift_left (Int64.of_int (v.bits.(1) land 3)) 62)
+    | _ -> assert false
 
 (* [Nativeint] *)
 let select_of f32 f64 = match Sys.word_size with

@@ -3,7 +3,7 @@ bitv.tex
 config.cache
 config.status
 Makefile
-bitv.ps.gz
+bitv.pdf
 test.ml
 autom4te.cache/
 autom4te.cache

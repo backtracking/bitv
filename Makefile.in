@@ -48,17 +48,13 @@ install-opt:
 # l.p.
 ######
 
-doc: bitv.dvi
+doc: bitv.pdf
 
 bitv.tex: bitv.mli
 	@OCAMLWEB@ -s --no-index bitv.mli -o $@
 
-bitv.dvi: bitv.tex
-	latex bitv && latex bitv
-
-bitv.ps.gz: bitv.dvi
-	dvips bitv.dvi -o
-	gzip -f --best bitv.ps
+bitv.pdf: bitv.tex
+	pdflatex bitv && pdflatex bitv
 
 # export
 ########
@@ -73,13 +69,13 @@ SOURCES = bitv.mli bitv.ml test.ml Makefile.in configure configure.in .depend \
 
 FTP=/users/demons/filliatr/WWW/ftp/ocaml/ds
 
-export:: bitv.ps.gz $(SOURCES)
+export:: bitv.pdf $(SOURCES)
 	mkdir -p export/$(NAME)
 	cp $(SOURCES) export/$(NAME)
 	(cd export; tar cf $(NAME).tar $(NAME); \
 	gzip -f --best $(NAME).tar)
 	cp -f bitv.ml bitv.mli export/$(NAME).tar.gz $(FTP)
-	cp -f bitv.ps.gz $(FTP)
+	cp -f bitv.pdf $(FTP)
 	caml2html -d $(FTP) bitv.ml bitv.mli
 
 # generic rules :
@@ -119,7 +115,7 @@ configure: configure.in
 
 clean:
 	rm -f *~ *.cm[iox] *.o
-	rm -f bitv.tex *.aux *.log *.dvi *.ps *.ps.gz
+	rm -f bitv.tex *.aux *.log *.dvi *.pdf
 
 depend:
 	rm -f .depend
