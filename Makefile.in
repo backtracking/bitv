@@ -59,8 +59,8 @@ bitv.pdf: bitv.tex
 # export
 ########
 
-MAJORVN=0
-MINORVN=9
+MAJORVN=1
+MINORVN=0
 VERSION=$(MAJORVN).$(MINORVN)
 NAME=bitv-$(VERSION)
 
