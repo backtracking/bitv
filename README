@@ -1,8 +1,8 @@
 
-This is a quick bit vectors library for Objective Caml.
+A bit vector library for OCaml.
 
-Installation:
--------------
+Installation
+------------
 
 1. Configure with
 
@@ -12,12 +12,21 @@ Installation:
 
 	make
 
-2. Install (into the ocaml standard library) with
+2. Install (as root if needed) with
 
 	make install
 
-Bug reports:
-------------
+
+Usage
+-----
+
+This library installs a single module "Bitv" in OCaml standard library.
+
+Documentation: https://www.lri.fr/~filliatr/ftp/ocaml/ds/bitv.mli.html
+
+
+Bug reports
+-----------
 
 Please send bug reports to Jean-Christophe.Filliatre@lri.fr
 
