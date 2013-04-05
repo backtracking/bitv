@@ -674,7 +674,7 @@ let of_int64_us i = match Sys.word_size with
 		      (let mi = Int64.shift_right_logical i 30 in
 		       (Int64.to_int mi) land max_int);
 		      let hi = Int64.shift_right_logical i 60 in
-		      (Int64.to_int hi) land 1 |] }
+		      (Int64.to_int hi) land 7 |] }
   | 64 -> { length = 63;
 	    bits = [| (Int64.to_int i) land max_int;
 		      let hi = Int64.shift_right_logical i 62 in
@@ -699,7 +699,7 @@ let of_int64_s i = match Sys.word_size with
 		      (let mi = Int64.shift_right_logical i 30 in
 		       (Int64.to_int mi) land max_int);
 		      let hi = Int64.shift_right_logical i 60 in
-		      (Int64.to_int hi) land 3 |] }
+		      (Int64.to_int hi) land 15 |] }
   | 64 -> { length = 64;
             bits = [| (Int64.to_int i) land max_int;
                       let hi = Int64.shift_right_logical i 62 in

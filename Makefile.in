@@ -60,7 +60,7 @@ bitv.pdf: bitv.tex
 ########
 
 MAJORVN=1
-MINORVN=0
+MINORVN=1
 VERSION=$(MAJORVN).$(MINORVN)
 NAME=bitv-$(VERSION)
 
