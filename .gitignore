@@ -12,3 +12,5 @@ configure
 config.log
 *.cm*
 *.o
+*.aux
+*.log
