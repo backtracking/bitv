@@ -18,7 +18,7 @@
 #   OCAMLC        "ocamlc" if present in the path, or a failure
 #                 or "ocamlc.opt" if present with same version number as ocamlc
 #   OCAMLOPT      "ocamlopt" (or "ocamlopt.opt" if present), or "no"
-#   OCAMLBEST     either "byte" if no native compiler was found, 
+#   OCAMLBEST     either "byte" if no native compiler was found,
 #                 or "opt" otherwise
 #   OCAMLDEP      "ocamldep"
 #   OCAMLLEX      "ocamllex"
@@ -27,9 +27,9 @@
 #   OCAMLVERSION  the ocaml version number
 #   OCAMLWEB      "ocamlweb" (not mandatory)
 
-# check for one particular file of the sources 
+# check for one particular file of the sources
 # ADAPT THE FOLLOWING LINE TO YOUR SOURCES!
-AC_INIT(bitv.mli)
+AC_INIT(bitv.mli, 1.1)
 
 # Check for Ocaml compilers
 
@@ -110,6 +110,29 @@ fi
 
 AC_CHECK_PROG(OCAMLWEB,ocamlweb,ocamlweb,true)
 
+# ocamlfind
+AC_CHECK_PROG(USEOCAMLFIND,ocamlfind,yes,no)
+
+if test "$USEOCAMLFIND" = yes; then
+   OCAMLFINDLIB=$(ocamlfind printconf stdlib)
+   OCAMLFIND=$(which ocamlfind)
+   if test "$OCAMLFINDLIB" != "$OCAMLLIB"; then
+   USEOCAMLFIND=no;
+   echo "but your ocamlfind is not compatible with your ocamlc:"
+   echo "ocamlfind : $OCAMLFINDLIB, ocamlc : $OCAMLLIB"
+   fi
+fi
+
+if test "$LIBDIR" = ""; then
+   if test "$USEOCAMLFIND" = yes; then
+        LIBDIR=$(ocamlfind printconf destdir)/bitv
+   else
+        LIBDIR=$OCAMLLIB/bitv
+   fi
+fi
+echo "Bitv library will be installed in: $LIBDIR"
+
+
 # substitutions to perform
 AC_SUBST(OCAMLC)
 AC_SUBST(OCAMLOPT)
@@ -120,7 +143,12 @@ AC_SUBST(OCAMLBEST)
 AC_SUBST(OCAMLVERSION)
 AC_SUBST(OCAMLLIB)
 AC_SUBST(OCAMLWEB)
+AC_SUBST(OCAMLFIND)
+AC_SUBST(USEOCAMLFIND)
+AC_SUBST(LIBDIR)
+AC_SUBST(PACKAGE_VERSION)
 
-# Finally create the Makefile from Makefile.in
-AC_OUTPUT(Makefile)
+AC_CONFIG_FILES(META Makefile)
+AC_OUTPUT
 chmod a-w Makefile
+chmod a-w META

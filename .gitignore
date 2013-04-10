@@ -2,6 +2,7 @@ export
 bitv.tex
 config.cache
 config.status
+META
 Makefile
 bitv.pdf
 test.ml

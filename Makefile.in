@@ -14,7 +14,8 @@
 ##########################################################################
 
 # where to install
-LIBDIR = @OCAMLLIB@
+LIBDIR = @LIBDIR@
+OCAMLFIND=@OCAMLFIND@
 
 CMO = bitv.cmo
 CMI = $(CMO:.cmo=.cmi)
@@ -36,6 +37,8 @@ test: bitv.cmo
 
 install: install-@OCAMLBEST@
 
+ifeq "@USEOCAMLFIND@" "no"
+
 install-byte:
 	mkdir -p $(DESTDIR)$(LIBDIR)
 	cp -f $(BYTEFILES) $(DESTDIR)$(LIBDIR)
@@ -44,6 +47,20 @@ install-opt:
 	mkdir -p $(DESTDIR)$(LIBDIR)
 	cp -f $(BYTEFILES) $(DESTDIR)$(LIBDIR)
 	cp -f $(OPTFILES) $(DESTDIR)$(LIBDIR)
+
+else
+
+DESTDIR=-destdir $(LIBDIR:/bitv=)
+
+install-byte:
+	$(OCAMLFIND) remove $(DESTDIR) bitv
+	$(OCAMLFIND) install $(DESTDIR) bitv META $(BYTEFILES)
+
+install-opt:
+	$(OCAMLFIND) remove $(DESTDIR) bitv
+	$(OCAMLFIND) install $(DESTDIR) bitv META $(BYTEFILES) $(OPTFILES)
+
+endif
 
 # l.p.
 ######
@@ -59,13 +76,11 @@ bitv.pdf: bitv.tex
 # export
 ########
 
-MAJORVN=1
-MINORVN=1
-VERSION=$(MAJORVN).$(MINORVN)
+VERSION=@PACKAGE_VERSION@
 NAME=bitv-$(VERSION)
 
-SOURCES = bitv.mli bitv.ml test.ml Makefile.in configure configure.in .depend \
-          README COPYING LICENSE CHANGES
+SOURCES = bitv.mli bitv.ml test.ml META.in Makefile.in configure configure.in \
+	  .depend README COPYING LICENSE CHANGES
 
 FTP=/users/demons/filliatr/WWW/ftp/ocaml/ds
 
