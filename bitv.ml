@@ -60,6 +60,7 @@ let keep_highest_bits a j = a land high_mask.(j)
     taking care of the invariant. Copy is immediate. *)
 
 let create n b =
+  if n < 0 || n > max_length then invalid_arg "Bitv.create";
   let initv = if b then max_int else 0 in
   let r = n mod bpi in
   if r = 0 then
@@ -108,12 +109,12 @@ let unsafe_set v n b =
 (*s The corresponding safe operations test the validiy of the access. *)
 
 let get v n =
-  if n < 0 or n >= v.length then invalid_arg "Bitv.get";
+  if n < 0 || n >= v.length then invalid_arg "Bitv.get";
   let (i,j) = pos n in
   ((Array.unsafe_get v.bits i) land (Array.unsafe_get bit_j j)) > 0
 
 let set v n b =
-  if n < 0 or n >= v.length then invalid_arg "Bitv.set";
+  if n < 0 || n >= v.length then invalid_arg "Bitv.set";
   let (i,j) = pos n in
   if b then
     Array.unsafe_set v.bits i
@@ -200,8 +201,8 @@ let unsafe_blit v1 ofs1 v2 ofs2 len =
     end
 
 let blit v1 ofs1 v2 ofs2 len =
-  if len < 0 or ofs1 < 0 or ofs1 + len > v1.length
-             or ofs2 < 0 or ofs2 + len > v2.length
+  if len < 0 || ofs1 < 0 || ofs1 + len > v1.length
+             || ofs2 < 0 || ofs2 + len > v2.length
   then invalid_arg "Bitv.blit";
   unsafe_blit v1.bits ofs1 v2.bits ofs2 len
 
@@ -209,7 +210,7 @@ let blit v1 ofs1 v2 ofs2 len =
     new vector of length [len] and blitting the subvector of [v] inside. *)
 
 let sub v ofs len =
-  if ofs < 0 or len < 0 or ofs + len > v.length then invalid_arg "Bitv.sub";
+  if ofs < 0 || len < 0 || ofs + len > v.length then invalid_arg "Bitv.sub";
   let r = create len false in
   unsafe_blit v.bits ofs r.bits 0 len;
   r
@@ -248,7 +249,7 @@ let concat vl =
   res
 
 (*s Filling is a particular case of blitting with a source made of all
-    ones or all zeros. Thus we instanciate [unsafe_blit], with 0 and
+    ones || all zeros. Thus we instanciate [unsafe_blit], with 0 and
     [max_int]. *)
 
 let blit_zeros v ofs len =
@@ -284,13 +285,12 @@ let blit_ones v ofs len =
     end
 
 let fill v ofs len b =
-  if ofs < 0 or len < 0 or ofs + len > v.length then invalid_arg "Bitv.fill";
+  if ofs < 0 || len < 0 || ofs + len > v.length then invalid_arg "Bitv.fill";
   if b then blit_ones v.bits ofs len else blit_zeros v.bits ofs len
 
 (*s All the iterators are implemented as for traditional arrays, using
     [unsafe_get]. For [iter] and [map], we do not precompute [(f
-    true)] and [(f false)] since [f] is likely to have
-    side-effects. *)
+    true)] and [(f false)] since [f] may have side-effects. *)
 
 let iter f v =
   for i = 0 to v.length - 1 do f (unsafe_get v i) done
@@ -341,6 +341,24 @@ let foldi_right f v x =
     r := f i (unsafe_get v i) !r
   done;
   !r
+
+(*s Population count *)
+
+let rec naive_pop x =
+  assert (x < 0x10000);
+  if x = 0 then 0 else 1 + naive_pop (x - (x land -x))
+
+let pop16 = Array.init 0x10000 naive_pop
+let pop16 n = Array.unsafe_get pop16 n
+
+let popi x = match Sys.word_size with
+  | 32 -> pop16 (x land 0xffff) + pop16 ((x lsr 16) land 0xffff)
+  | 64 -> pop16 (x land 0xffff) + pop16 ((x lsr 16) land 0xffff)
+        + pop16 ((x lsr 32) land 0xffff) + pop16 ((x lsr 48) land 0xffff)
+  | _ -> assert false
+
+let pop v =
+  Array.fold_left (fun acc n -> acc + popi n) 0 v.bits
 
 let iteri_true_naive f v =
   Array.iteri

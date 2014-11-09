@@ -119,6 +119,10 @@ val fold_right : (bool -> 'a -> 'a) -> t -> 'a -> 'a
 val foldi_left : ('a -> int -> bool -> 'a) -> 'a -> t -> 'a
 val foldi_right : (int -> bool -> 'a -> 'a) -> t -> 'a -> 'a
 
+(*s Population count, i.e., number of 1 bits *)
+
+val pop: t -> int
+
 (*s [iteri_true f v] applies function [f] in turn to all indexes of
     the elements of [v] which are set (i.e. [true]); indexes are
     visited from least significant to most significant. *)

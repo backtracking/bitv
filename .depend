@@ -1,2 +1,9 @@
-bitv.cmo: bitv.cmi 
-bitv.cmx: bitv.cmi 
+bitv.cmi :
+bitv.cmo : bitv.cmi
+bitv.cmx : bitv.cmi
+bitv_string.cmo :
+bitv_string.cmx :
+sieve.cmo : bitv_string.cmo
+sieve.cmx : bitv_string.cmx
+test.cmo : bitv.cmi
+test.cmx : bitv.cmx

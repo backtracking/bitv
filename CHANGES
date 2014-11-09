@@ -1,4 +1,7 @@
 
+  o added pop (population count, i.e., number of 1 bits)
+  o suppressed some warnings with OCaml >= 4.00
+
 version 1.1, 10/04/2013
 =======================
   o installation using ocamlfind (if found) or in `ocamlc -where`/bitv otherwise

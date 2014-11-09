@@ -35,6 +35,9 @@ opt: $(CMO) $(CMX)
 test: bitv.cmo
 	ocaml test.ml
 
+sieve.opt: bitv.cmx bitv_string.cmx sieve.cmx
+	@OCAMLOPT@ -o $@ $^
+
 install: install-@OCAMLBEST@
 
 ifeq "@USEOCAMLFIND@" "no"
