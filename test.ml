@@ -98,7 +98,7 @@ let () =
 (* input/output *)
 
 let test_io v =
-  let f = Filename.temp_file "bv" "" in
+  let f = Filename.temp_file "bitv" "" in
   let c = open_out f in
   output_bin c v;
   close_out c;
