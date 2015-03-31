@@ -105,6 +105,7 @@ let test_io v =
   let c = open_in f in
   let w = input_bin c in
   close_in c;
+  try Sys.remove f with _ -> ();
   assert (v = w)
 
 let () =
