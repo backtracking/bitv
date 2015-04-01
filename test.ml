@@ -98,13 +98,14 @@ let () =
 (* input/output *)
 
 let test_io v =
-  let f = Filename.temp_file "bv" "" in
+  let f = Filename.temp_file "bitv" "" in
   let c = open_out f in
   output_bin c v;
   close_out c;
   let c = open_in f in
   let w = input_bin c in
   close_in c;
+  try Sys.remove f with _ -> ();
   assert (v = w)
 
 let () =
