@@ -17,7 +17,7 @@
 LIBDIR = @LIBDIR@
 OCAMLFIND=@OCAMLFIND@
 
-CMO = bitv.cmo
+CMO = bitv.cmo bitv_string.cmo
 CMI = $(CMO:.cmo=.cmi)
 MLI = $(CMO:.cmo=.mli)
 CMX = $(CMO:.cmo=.cmx)

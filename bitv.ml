@@ -46,7 +46,7 @@ let max_length = Sys.max_array_length * bpi
 let bit_j = Array.init bpi (fun j -> 1 lsl j)
 let bit_not_j = Array.init bpi (fun j -> max_int - bit_j.(j))
 
-let low_mask = Array.create (succ bpi) 0
+let low_mask = Array.make (succ bpi) 0
 let _ =
   for i = 1 to bpi do low_mask.(i) <- low_mask.(i-1) lor bit_j.(pred i) done
 
@@ -64,10 +64,10 @@ let create n b =
   let initv = if b then max_int else 0 in
   let r = n mod bpi in
   if r = 0 then
-    { length = n; bits = Array.create (n / bpi) initv }
+    { length = n; bits = Array.make (n / bpi) initv }
   else begin
     let s = n / bpi in
-    let b = Array.create (succ s) initv in
+    let b = Array.make (succ s) initv in
     b.(s) <- b.(s) land low_mask.(r);
     { length = n; bits = b }
   end
@@ -373,7 +373,7 @@ let iteri_true_naive f v =
 (*s Number of trailing zeros (on a 32-bit machine) *)
 
 let hash32 x = ((0x34ca8b09 * x) land 0x3fffffff) lsr 24
-let ntz_arr32 = Array.create 64 0
+let ntz_arr32 = Array.make 64 0
 let () = for i = 0 to 30 do ntz_arr32.(hash32 (1 lsl i)) <- i done
 let ntz32 x = if x == 0 then 31 else ntz_arr32.(hash32 (x land (-x)))
 
@@ -393,7 +393,7 @@ let iteri_true_ntz32 f v =
 
 let martin_constant = (0x03f79d71b lsl 28) lor 0x4ca8b09 (*0x03f79d71b4ca8b09*)
 let hash64 x = ((martin_constant * x) land max_int) lsr 56
-let ntz_arr64 = Array.create 64 0
+let ntz_arr64 = Array.make 64 0
 let () = for i = 0 to 62 do ntz_arr64.(hash64 (1 lsl i)) <- i done
 let ntz64 x = if x == 0 then 63 else ntz_arr64.(hash64 (x land (-x)))
 
@@ -427,7 +427,7 @@ let bw_and v1 v2 =
   let b1 = v1.bits
   and b2 = v2.bits in
   let n = Array.length b1 in
-  let a = Array.create n 0 in
+  let a = Array.make n 0 in
   for i = 0 to n - 1 do
     a.(i) <- b1.(i) land b2.(i)
   done;
@@ -439,7 +439,7 @@ let bw_or v1 v2 =
   let b1 = v1.bits
   and b2 = v2.bits in
   let n = Array.length b1 in
-  let a = Array.create n 0 in
+  let a = Array.make n 0 in
   for i = 0 to n - 1 do
     a.(i) <- b1.(i) lor b2.(i)
   done;
@@ -451,7 +451,7 @@ let bw_xor v1 v2 =
   let b1 = v1.bits
   and b2 = v2.bits in
   let n = Array.length b1 in
-  let a = Array.create n 0 in
+  let a = Array.make n 0 in
   for i = 0 to n - 1 do
     a.(i) <- b1.(i) lxor b2.(i)
   done;
@@ -460,7 +460,7 @@ let bw_xor v1 v2 =
 let bw_not v =
   let b = v.bits in
   let n = Array.length b in
-  let a = Array.create n 0 in
+  let a = Array.make n 0 in
   for i = 0 to n - 1 do
     a.(i) <- max_int land (lnot b.(i))
   done;
