@@ -64,6 +64,11 @@ let init n f =
   done;
   v
 
+let fill v ofs len b =
+  if ofs < 0 || len < 0 || ofs + len > v.length then invalid_arg "Bitv.fill";
+  (* FIXME: more efficient version using blit_ones and blit_zeros *)
+  for i = ofs to ofs + len - 1 do unsafe_set v i b done
+
 (*s All the iterators are implemented as for traditional arrays, using
     [unsafe_get]. For [iter] and [map], we do not precompute [(f
     true)] and [(f false)] since [f] may have side-effects. *)

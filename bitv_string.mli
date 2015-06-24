@@ -37,7 +37,7 @@ val copy : t -> t
 
 (* val sub : t -> int -> int -> t *)
 
-(* val fill : t -> int -> int -> bool -> unit *)
+val fill : t -> int -> int -> bool -> unit
 
 (* val blit : t -> int -> t -> int -> int -> unit *)
 
