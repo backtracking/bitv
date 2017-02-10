@@ -1,4 +1,6 @@
 
+version 1.2, 10/02/2017
+=======================
   o added pop (population count, i.e., number of 1 bits)
   o suppressed some warnings with OCaml >= 4.00
 

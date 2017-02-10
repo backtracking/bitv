@@ -1,6 +1,6 @@
 opam-version: "1"
 name: "bitv"
-version: "1.1"
+version: "@PACKAGE_VERSION@"
 maintainer: "filliatr@lri.fr"
 authors: "Jean-Christophe Filliâtre"
 homepage: "https://www.lri.fr/~filliatr/software.en.html"

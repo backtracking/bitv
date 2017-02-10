@@ -29,7 +29,7 @@
 
 # check for one particular file of the sources
 # ADAPT THE FOLLOWING LINE TO YOUR SOURCES!
-AC_INIT(bitv.mli, 1.1)
+AC_INIT(bitv.mli, 1.2)
 
 # Check for Ocaml compilers
 
@@ -148,7 +148,7 @@ AC_SUBST(USEOCAMLFIND)
 AC_SUBST(LIBDIR)
 AC_SUBST(PACKAGE_VERSION)
 
-AC_CONFIG_FILES(META Makefile)
+AC_CONFIG_FILES(META Makefile opam)
 AC_OUTPUT
 chmod a-w Makefile
 chmod a-w META
