@@ -82,7 +82,7 @@ bitv.pdf: bitv.tex
 VERSION=@PACKAGE_VERSION@
 NAME=bitv-$(VERSION)
 
-SOURCES = *.mli *.ml META.in opam.in Makefile.in configure configure.in \
+SOURCES = *.mli *.ml META.in opam Makefile.in configure configure.in \
 	  .depend README COPYING LICENSE CHANGES
 
 FTP=/users/demons/filliatr/WWW/ftp/ocaml/ds

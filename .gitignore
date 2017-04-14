@@ -16,4 +16,4 @@ config.log
 *.aux
 *.log
 sieve.opt
-opam
+
