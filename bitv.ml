@@ -523,11 +523,11 @@ module S(I : sig val least_first : bool end) = struct
 
   let to_string v =
     let n = v.length in
-    let s = String.make n '0' in
+    let s = Bytes.make n '0' in
     for i = 0 to n - 1 do
-      if unsafe_get v i then s.[if I.least_first then i else n-1-i] <- '1'
+      if unsafe_get v i then Bytes.set s (if I.least_first then i else n-1-i) '1'
     done;
-    s
+    Bytes.unsafe_to_string s
 
   let print fmt v = Format.pp_print_string fmt (to_string v)
 
