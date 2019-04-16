@@ -33,6 +33,7 @@ type t
     with bit number [i] initialized to the result of [(f i)].
     [(Bitv.set v n b)] sets the [n]th bit of [v] to the value [b].
     [(Bitv.get v n)] returns the [n]th bit of [v].
+    [(Bitv.get_bits v)] returns the underlying bits storage data structure.
     [Bitv.length] returns the length (number of elements) of the given
     vector. *)
 
@@ -43,6 +44,8 @@ val init : int -> (int -> bool) -> t
 val set : t -> int -> bool -> unit
 
 val get : t -> int -> bool
+
+val get_bits : t -> int array
 
 val length : t -> int
 

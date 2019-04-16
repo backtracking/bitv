@@ -30,6 +30,9 @@ type t = {
 
 let length v = v.length
 
+let get_bits v =
+  v.bits
+
 (*s Each element of the array is an integer containing [bpi] bits, where
     [bpi] is determined according to the machine word size. Since we do not
     use the sign bit, [bpi] is 30 on a 32-bits machine and 62 on a 64-bits
@@ -748,5 +751,3 @@ let select_to f32 f64 = match Sys.word_size with
   | _ -> assert false
 let to_nativeint_s = select_to to_int32_s to_int64_s
 let to_nativeint_us = select_to to_int32_us to_int64_us
-
-
