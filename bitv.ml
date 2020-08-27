@@ -549,6 +549,15 @@ module M = S(struct let least_first = false end)
 
 (*s Input/output in a machine-independent format. *)
 
+let bytes_of_int x =
+  Bytes.init 8 (fun i -> Char.chr ((x lsr (8 * i)) land 0xFF))
+
+let int_of_bytes b =
+  assert (Bytes.length b = 8);
+  let rec build x i =
+    if i < 0 then x else build ((x lsl 8) lor Char.code (Bytes.get b i)) (pred i) in
+  build 0 7
+
 let output_bin out_ch v =
   let len = length v in
   let rec loop i pow byte =
