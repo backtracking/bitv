@@ -1,38 +1,34 @@
 (* tests *)
 
-open Format;;
-
-#load "bitv.cmo";;
-open Bitv;;
-open Bitv.M;;
-#install_printer print;;
+open Bitv
+open Bitv.M
 
 (* 0-length blitting *)
-let v = create 30 true;;
-let () = blit v 0 v 30 0;;
-let () = assert (length v = 30);;
+let v = create 30 true
+let () = blit v 0 v 30 0
+let () = assert (length v = 30)
 
 (* 0-length extraction *)
-let e = sub v 30 0;;
-let () = assert (length e = 0);;
+let e = sub v 30 0
+let () = assert (length e = 0)
 
 (* 0-length concatenation *)
-let w = append v e;;
-let () = assert (length w = 30);;
+let w = append v e
+let () = assert (length w = 30)
 
-let w = append e v;;
-let () = assert (length w = 30);;
+let w = append e v
+let () = assert (length w = 30)
 
 (* filling *)
-let () = fill v 4 11 false;;
-let () = fill v 30 0 true;;
-let () = assert (length v = 30);;
-let () = assert (to_string v = "111111111111111000000000001111");;
+let () = fill v 4 11 false
+let () = fill v 30 0 true
+let () = assert (length v = 30)
+let () = assert (to_string v = "111111111111111000000000001111")
 
 (* bitwise operations *)
-let s = sub v 2 4;;
-let () = assert (bw_not (bw_not s) = s);;
-let () = assert (bw_and e e = e);;
+let s = sub v 2 4
+let () = assert (bw_not (bw_not s) = s)
+let () = assert (bw_and e e = e)
 
 (* iteri_true *)
 let test_iteri_true n =
@@ -69,7 +65,7 @@ let test_conv size random fto fof =
     assert (length v = size);
     assert (fto v = x)
   in
-  for k = 1 to 1000 do test (random ()) done
+  for _k = 1 to 1000 do test (random ()) done
 
 let () = test_conv (Sys.word_size-2) Random.bits to_int_us of_int_us
 let random_int_s () = min_int + (Random.bits ()) + (Random.bits ())
