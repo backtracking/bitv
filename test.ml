@@ -104,8 +104,29 @@ let test_io v =
   try Sys.remove f with _ -> ();
   assert (v = w)
 
+let test_bytes v =
+  assert (of_bytes (to_bytes v) = v)
+
+let test_equivalent v =
+  let f = Filename.temp_file "bitv" "" in
+  let c = open_out f in
+  output_bin c v;
+  close_out c;
+  let c = open_in f in
+  let len = in_channel_length c in
+  let b = Bytes.create len in
+  really_input c b 0 len;
+  close_in c;
+  try Sys.remove f with _ -> ();
+  assert (b = to_bytes v)
+
 let () =
-  for n = 0 to 200 do test_io (init n (fun _ -> Random.bool ())) done
+  for n = 0 to 200 do
+    let bv = init n (fun _ -> Random.bool ()) in
+    test_io bv;
+    test_bytes bv;
+    test_equivalent bv;
+  done
 
 open Bitv_string
 

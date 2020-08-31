@@ -186,15 +186,18 @@ end
 
 (** {2 Input/output in a machine-independent format}
 
-    The following functions export/import a bit vector to/from a channel,
-    in a way that is compact, independent of the machine architecture, and
-    independent of the OCaml version.
+    The following functions export/import a bit vector to/from a channel or
+    bytes, in a way that is compact, independent of the machine architecture,
+    and independent of the OCaml version.
     For a bit vector of length [n], the number of bytes of this external
     representation is 4+ceil(n/8) on a 32-bit machine and 8+ceil(n/8) on
     a 64-bit machine. *)
 
 val output_bin: out_channel -> t -> unit
 val input_bin: in_channel -> t
+
+val to_bytes: t -> bytes
+val of_bytes: bytes -> t
 
 (** {2 Conversions to and from lists of integers}
 
