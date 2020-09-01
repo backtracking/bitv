@@ -1,10 +1,11 @@
 (library
- (name bitv)
+ (public_name bitv)
  (flags
-  (:standard -w -32))
+   (:standard -w -32))
  (modules bitv))
 
 (library
+ (public_name bitv.string)
  (name bitv_string)
  (modules bitv_string))
 
