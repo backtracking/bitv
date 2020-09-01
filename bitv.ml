@@ -261,7 +261,7 @@ let blit_zeros v ofs len =
     else begin
       blit_bits 0 bj (bpi - bj) v ofs;
       let n = ref (ofs + bpi - bj) in
-      for i = succ bi to pred ei do
+      for _i = succ bi to pred ei do
 	blit_int 0 v !n;
 	n := !n + bpi
       done;
@@ -277,7 +277,7 @@ let blit_ones v ofs len =
     else begin
       blit_bits max_int bj (bpi - bj) v ofs;
       let n = ref (ofs + bpi - bj) in
-      for i = succ bi to pred ei do
+      for _i = succ bi to pred ei do
 	blit_int max_int v !n;
 	n := !n + bpi
       done;
@@ -359,16 +359,6 @@ let popi x = match Sys.word_size with
 
 let pop v =
   Array.fold_left (fun acc n -> acc + popi n) 0 v.bits
-
-let iteri_true_naive f v =
-  Array.iteri
-    (fun i n -> if n != 0 then begin
-       let i_bpi = i * bpi in
-       for j = 0 to bpi - 1 do
-	 if n land (Array.unsafe_get bit_j j) > 0 then f (i_bpi + j)
-       done
-     end)
-    v.bits
 
 (*s Number of trailing zeros (on a 32-bit machine) *)
 

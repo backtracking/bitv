@@ -1,0 +1,14 @@
+(library
+ (name bitv)
+ (flags
+  (:standard -w -32))
+ (modules bitv))
+
+(library
+ (name bitv_string)
+ (modules bitv_string))
+
+(test
+ (name test)
+ (modules test)
+ (libraries bitv))

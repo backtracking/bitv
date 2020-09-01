@@ -1,3 +1,6 @@
+_opam
+_build
+.merlin
 export
 bitv.tex
 config.cache
