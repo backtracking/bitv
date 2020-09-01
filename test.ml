@@ -106,3 +106,10 @@ let test_io v =
 
 let () =
   for n = 0 to 200 do test_io (init n (fun _ -> Random.bool ())) done
+
+open Bitv_string
+
+(* 0-length blitting *)
+let v = create 30 true
+let () = assert (length v = 30)
+let () = assert (get v 17)

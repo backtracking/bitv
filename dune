@@ -12,4 +12,4 @@
 (test
  (name test)
  (modules test)
- (libraries bitv))
+ (libraries bitv bitv.string))
