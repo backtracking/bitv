@@ -13,7 +13,7 @@
 (*                                                                        *)
 (**************************************************************************)
 
-(** Variant implementation. See [Bitv] for documentation. *)
+(** Variant implementation. See {!Bitv} for documentation. *)
 
 type t
 
@@ -31,15 +31,7 @@ val max_length : int
 
 val copy : t -> t
 
-(* val append : t -> t -> t *)
-
-(* val concat : t list -> t *)
-
-(* val sub : t -> int -> int -> t *)
-
 val fill : t -> int -> int -> bool -> unit
-
-(* val blit : t -> int -> t -> int -> int -> unit *)
 
 val iter : (bool -> unit) -> t -> unit
 val map : (bool -> bool) -> t -> t
@@ -60,9 +52,6 @@ val bw_and : t -> t -> t
 val bw_or  : t -> t -> t
 val bw_xor : t -> t -> t
 val bw_not : t -> t
-
-(* val all_zeros : t -> bool *)
-(* val all_ones  : t -> bool *)
 
 val to_list : t -> int list
 val of_list : int list -> t
