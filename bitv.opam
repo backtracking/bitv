@@ -3,8 +3,11 @@ name: "bitv"
 maintainer: "filliatr@lri.fr"
 authors: "Jean-Christophe Filliâtre"
 license: "LGPL v2"
+synopsis: "A bit vector library for OCaml"
+description: "A bit vector library for OCaml"
 homepage: "https://www.lri.fr/~filliatr/software.en.html"
 bug-reports: "https://github.com/backtracking/bitv/issues"
+doc: "https://backtracking.github.io/bitv"
 depends: [
   "ocaml"
   "dune" {>= "2.0.0"}
