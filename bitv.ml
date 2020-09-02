@@ -545,30 +545,43 @@ let bytes_of_int x =
 let int_of_bytes b =
   assert (Bytes.length b = 8);
   let rec build x i =
-    if i < 0 then x else build ((x lsl 8) lor Char.code (Bytes.get b i)) (pred i) in
+    if i < 0 then x
+    else build ((x lsl 8) lor Char.code (Bytes.get b i)) (pred i)
+  in
   build 0 7
 
-let output_bin out_ch v =
+let to_bin write v =
   let len = length v in
   let rec loop i pow byte =
     let byte = if unsafe_get v i then byte lor pow else byte in
     if i = len - 1 then
-      output_byte out_ch byte
+      write byte
     else if i mod 8 = 7 then begin
-      output_byte out_ch byte;
+      write byte;
       loop (i + 1) 1 0
     end else
       loop (i + 1) (pow * 2) byte
   in
-  output_binary_int out_ch len;
+  bytes_of_int len
+  |> Bytes.iter (fun b -> Char.code b |> write);
   if len > 0 then loop 0 1 0
 
-let input_bin in_ch =
-  let len = input_binary_int in_ch in
+let output_bin out_ch v =
+  let write = output_byte out_ch in
+  to_bin write v
+
+let to_bytes t =
+  let buf = Buffer.create 0 in
+  let write i = Buffer.add_char buf (Char.chr i) in
+  to_bin write t;
+  Buffer.to_bytes buf
+
+let of_bin read =
+  let len = Bytes.init 8 (fun _ -> read () |> Char.chr) |> int_of_bytes in
   let bits = create len false in
   let rec loop i byte =
     if i < len then begin
-      let byte = if i mod 8 = 0 then input_byte in_ch else byte in
+      let byte = if i mod 8 = 0 then read () else byte in
       if byte land 1 = 1 then unsafe_set bits i true;
       loop (i+1) (byte / 2)
     end
@@ -576,7 +589,21 @@ let input_bin in_ch =
   if len > 0 then loop 0 0;
   bits
 
-(*s Iteration on all bit vectors of length [n] using a Gray code. *)
+let input_bin in_ch =
+  let read () = input_byte in_ch in
+  of_bin read
+
+let of_bytes b =
+  let read =
+    let p = ref 0 in
+    fun () ->
+      let ret = Bytes.get b !p |> Char.code in
+      incr p;
+      ret
+  in
+  of_bin read
+
+(* Iteration on all bit vectors of length [n] using a Gray code. *)
 
 let first_set v n =
   let rec lookup i =

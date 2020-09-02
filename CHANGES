@@ -1,6 +1,8 @@
 unreleased
 =======================
   o switch to dune build system, and opam 2.0
+  o add to/of_bytes for machine-independant serialisation
+  o fix binary serialisation when vector is larger than 2^32
 
 version 1.3, 14/12/2017
 =======================
