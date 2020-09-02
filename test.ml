@@ -134,3 +134,22 @@ open Bitv_string
 let v = create 30 true
 let () = assert (length v = 30)
 let () = assert (get v 17)
+
+(* 0-length extraction *)
+let e = create 0 false
+let () = assert (length e = 0)
+
+(* filling *)
+let () = fill v 4 11 false
+let () = fill v 30 0 true
+let () = assert (length v = 30)
+let () = assert (pop v = 19)
+
+let ones = create 30 true
+let () = assert (pop ones = 30)
+let zeros = create 30 false
+let () = assert (pop zeros = 0)
+let () = assert (bw_or v ones = ones)
+let () = assert (bw_and v ones = v)
+let () = assert (bw_xor v zeros = v)
+let () = assert (bw_xor v ones = bw_not v)

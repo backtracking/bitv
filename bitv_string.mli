@@ -13,7 +13,7 @@
 (*                                                                        *)
 (**************************************************************************)
 
-(*s Variant implementation. See {Bitv} for documentation. *)
+(** Variant implementation. See [Bitv] for documentation. *)
 
 type t
 
@@ -68,7 +68,7 @@ val to_list : t -> int list
 val of_list : int list -> t
 val of_list_with_length : int list -> int -> t
 
-(*s Only if you know what you are doing... *)
+(** {2 Only if you know what you are doing...} *)
 
 val unsafe_set : t -> int -> bool -> unit
 val unsafe_get : t -> int -> bool
