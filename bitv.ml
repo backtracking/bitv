@@ -89,9 +89,7 @@ let copy v = { length = v.length; bits = Array.copy v.bits }
     bitwiwe operation: an {\em or} with [bit_j] to set it, and an {\em
     and} with [bit_not_j] to unset it. *)
 
-let pos n =
-  let i = n / bpi and j = n mod bpi in
-  if j < 0 then (i - 1, j + bpi) else (i,j)
+let pos n = n / bpi, n mod bpi
 
 let unsafe_get v n =
   let (i,j) = pos n in
