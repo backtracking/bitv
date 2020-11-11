@@ -13,3 +13,8 @@
  (name test)
  (modules test)
  (libraries bitv bitv.string))
+
+(test
+ (name sieve)
+ (modules sieve)
+ (libraries bitv bitv.string))
