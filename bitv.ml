@@ -483,6 +483,39 @@ and shiftr v d =
     r
   end
 
+(*s Rotate operations. It is easy to reuse [unsafe_blit], although it is
+    probably slightly less efficient than an ad-hoc piece of code. *)
+
+let rec rotatel v d =
+  if d < 0 then
+    rotater v (-d)
+  else
+  let n = v.length in
+  let d = d mod n in
+  if d == 0 then
+    copy v
+  else begin
+    let r = create n false in
+    unsafe_blit v.bits 0 r.bits d (n - d); (* shiftl *)
+    unsafe_blit v.bits (n - d) r.bits 0 d; (* wraparound ms to ls *)
+    r
+  end
+
+and rotater v d =
+  if d < 0 then
+    rotatel v (-d)
+  else
+  let n = v.length in
+  let d = d mod n in
+  if d == 0 then
+    copy v
+  else begin
+    let r = create n false in
+    unsafe_blit v.bits d r.bits 0 (n - d); (* shiftr *)
+    unsafe_blit v.bits 0 r.bits (n - d) d; (* wraparound ls to ms *)
+    r
+  end
+
 (*s Testing for all zeros and all ones. *)
 
 let all_zeros v =

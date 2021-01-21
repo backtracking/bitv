@@ -160,6 +160,12 @@ val shiftl : t -> int -> t
 val shiftr : t -> int -> t
 (** moves bits from most to least significant; introduces zeros *)
 
+val rotatel : t -> int -> t
+(** moves bits from least to most significant with wraparound *)
+
+val rotater : t -> int -> t
+(** moves bits from most to least significant with wraparound *)
+
 (** {2 Test functions} *)
 
 val all_zeros : t -> bool
