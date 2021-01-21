@@ -57,6 +57,23 @@ let test_shift n =
 let () =
   for n = 1 to 200 do test_shift n done
 
+(* rotations *)
+
+let () =
+  let v = of_string "110101110" in
+  assert (rotatel v 1 = of_string "101011101");
+  assert (rotatel v (-1) = of_string "011010111");
+  assert (rotater v 1 = of_string "011010111")
+
+let test_rotate n =
+  let v = init n (fun _ -> Random.bool ()) in
+  let k = Random.int (2*n) - n in
+  let w = rotatel v k in
+  for i = 0 to n-1 do assert (get v i = get w ((i + n + k) mod n)) done
+
+let () =
+  for n = 1 to 200 do test_rotate n done
+
 (* conversions to/from integers *)
 
 let test_conv size random fto fof =
