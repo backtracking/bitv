@@ -1,3 +1,6 @@
+
+  - new functions `rotatel` and `rotater` (patch from Tim Bourke)
+
 # 1.4 (02/08/2020)
   - switch to dune build system, and opam 2.0
   - add to/of_bytes for machine-independant serialisation
