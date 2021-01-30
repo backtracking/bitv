@@ -1,4 +1,5 @@
 
+# 1.5 (30/01/2021)
   - new functions `rotatel` and `rotater` (patch from Tim Bourke)
 
 # 1.4 (02/08/2020)
