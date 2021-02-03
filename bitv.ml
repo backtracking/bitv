@@ -382,7 +382,8 @@ let iteri_true_ntz32 f v =
 let martin_constant = (0x03f79d71b lsl 28) lor 0x4ca8b09 (*0x03f79d71b4ca8b09*)
 let hash64 x = ((martin_constant * x) land max_int) lsr 56
 let ntz_arr64 = Array.make 64 0
-let () = for i = 0 to 62 do ntz_arr64.(hash64 (1 lsl i)) <- i done
+let () = if Sys.word_size >= 64 then
+  for i = 0 to 62 do ntz_arr64.(hash64 (1 lsl i)) <- i done
 let ntz64 x = if x == 0 then 63 else ntz_arr64.(hash64 (x land (-x)))
 
 let iteri_true_ntz64 f v =
