@@ -54,13 +54,15 @@ let high_mask = Array.init (succ bpi) (fun j -> low_mask.(j) lsl (bpi-j))
 
 let keep_highest_bits a j = a land high_mask.(j)
 
-let exceeds_max_length n = n / bpi > Sys.max_array_length
+let exceeds_max_length n =
+  let s = n / bpi in
+  (if n mod bpi = 0 then s else s + 1) > Sys.max_array_length
 
 (*s Creating and normalizing a bit vector is easy: it is just a matter of
     taking care of the invariant. Copy is immediate. *)
 
 let create n b =
-  if n < 0 || n / bpi > Sys.max_array_length then invalid_arg "Bitv.create";
+  if n < 0 || exceeds_max_length n then invalid_arg "Bitv.create";
   let initv = if b then max_int else 0 in
   let r = n mod bpi in
   if r = 0 then

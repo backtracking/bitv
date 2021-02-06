@@ -43,9 +43,9 @@ val length : t -> int
 (** [Bitv.length] returns the length (number of elements) of the given
     vector. *)
 
+val exceeds_max_length : int -> bool
 (** Returns true if the argument exceeds the maximum length of a bit vector
     (System dependent). *)
-val exceeds_max_length : int -> bool
 
 (** {2 Copies and concatenations.} *)
 
