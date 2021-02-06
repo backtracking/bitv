@@ -43,12 +43,16 @@ val length : t -> int
 (** [Bitv.length] returns the length (number of elements) of the given
     vector. *)
 
+val max_length : int
+(** @deprecated Use [exceeds_max_length] instead.
+    On a 32-bit platform (e.g. Javascript) the computation of [max_length]
+    may overflow and return a negative value. *)
+
 val exceeds_max_length : int -> bool
 (** Returns true if the argument exceeds the maximum length of a bit vector
     (System dependent). *)
 
 (** {2 Copies and concatenations.} *)
-
 
 val copy : t -> t
 (** [(Bitv.copy v)] returns a copy of [v],
@@ -61,7 +65,6 @@ val append : t -> t -> t
 val concat : t list -> t
 (** [Bitv.concat] is similar to [Bitv.append], but catenates a list of
    vectors. *)
-
 
 (** {2 Sub-vectors and filling.} *)
 
@@ -133,7 +136,6 @@ val gray_iter : (t -> unit) -> int -> unit
 (** [gray_iter f n] iterates function [f] on all bit vectors
   of length [n], once each, using a Gray code. The order in which
   bit vectors are processed is unspecified. *)
-
 
 (** {2 Bitwise operations.}
 

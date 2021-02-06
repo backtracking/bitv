@@ -54,6 +54,8 @@ let high_mask = Array.init (succ bpi) (fun j -> low_mask.(j) lsl (bpi-j))
 
 let keep_highest_bits a j = a land high_mask.(j)
 
+let max_length = Sys.max_array_length * bpi
+
 let exceeds_max_length n =
   let s = n / bpi in
   (if n mod bpi = 0 then s else s + 1) > Sys.max_array_length

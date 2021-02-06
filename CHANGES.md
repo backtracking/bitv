@@ -1,6 +1,6 @@
 
-  - :exclamation: `max_length` replaced by `exceeds_max_length`
   - fixed build on 32-bit platforms e.g. js_of_ocaml (patch from Tim Bourke)
+  - added `exceeds_max_length` to replace `max_length` (deprecated)
 
 # 1.5 (30/01/2021)
   - new functions `rotatel` and `rotater` (patch from Tim Bourke)
