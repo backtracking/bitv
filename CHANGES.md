@@ -1,4 +1,5 @@
 
+# 1.6 (06/02/2021)
   - fixed build on 32-bit platforms e.g. js_of_ocaml (patch from Tim Bourke)
   - added `exceeds_max_length` to replace `max_length` (deprecated)
 
