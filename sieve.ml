@@ -4,7 +4,7 @@
 open Bitv
 
 let sieve1 limit =
-  if limit >= max_length then invalid_arg "first_primes_upto";
+  if exceeds_max_length limit then invalid_arg "first_primes_upto";
   let b = create (limit + 1) true in
   unsafe_set b 0 false;
   unsafe_set b 1 false;
@@ -28,7 +28,7 @@ let () = assert (pop (sieve1 100) = 25)
 open Bitv_string
 
 let sieve2 limit =
-  if limit >= max_length then invalid_arg "first_primes_upto";
+  if exceeds_max_length limit then invalid_arg "first_primes_upto";
   let b = create (limit + 1) true in
   unsafe_set b 0 false;
   unsafe_set b 1 false;
