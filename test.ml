@@ -3,6 +3,8 @@
 open Bitv
 open Bitv.M
 
+let (=) = Int.equal
+
 (* 0-length blitting *)
 let v = create 30 true
 let () = blit v 0 v 30 0
@@ -26,7 +28,7 @@ let () = assert (equal w v)
 let () = fill v 4 11 false
 let () = fill v 30 0 true
 let () = assert (length v = 30)
-let () = assert (to_string v = "111111111111111000000000001111")
+let () = assert (String.equal (to_string v) "111111111111111000000000001111")
 
 (* bitwise operations *)
 let s = sub v 2 4
@@ -54,8 +56,8 @@ let test_shift n =
   let v = init n (fun _ -> Random.bool ()) in
   let k = Random.int n in
   let w = shiftr v k in
-  for i = 0 to n-1-k do assert (get v (k+i) = get w i) done;
-  for i = n-k to n-1 do assert (get w i = false) done
+  for i = 0 to n-1-k do assert (Bool.equal (get v (k+i)) (get w i)) done;
+  for i = n-k to n-1 do assert (Bool.equal (get w i) false) done
 
 let () =
   for n = 1 to 200 do test_shift n done
@@ -72,7 +74,7 @@ let test_rotate n =
   let v = init n (fun _ -> Random.bool ()) in
   let k = Random.int (2*n) - n in
   let w = rotatel v k in
-  for i = 0 to n-1 do assert (get v i = get w ((i + n + k) mod n)) done
+  for i = 0 to n-1 do assert (Bool.equal (get v i) (get w ((i + n + k) mod n))) done
 
 let () =
   for n = 1 to 200 do test_rotate n done
@@ -100,37 +102,37 @@ let () =
 
 (* conversions to/from integers *)
 
-let test_conv size random fto fof =
+let test_conv equal size random fto fof =
   let test x =
     let v = fof x in
     assert (length v = size);
-    assert (fto v = x)
+    assert (equal (fto v) x)
   in
   for _k = 1 to 1000 do test (random ()) done
 
-let () = test_conv (Sys.word_size-2) Random.bits to_int_us of_int_us
+let () = test_conv Int.equal (Sys.word_size-2) Random.bits to_int_us of_int_us
 let random_int_s () = min_int + (Random.bits ()) + (Random.bits ())
-let () = test_conv (Sys.word_size-1) random_int_s to_int_s  of_int_s
+let () = test_conv Int.equal (Sys.word_size-1) random_int_s to_int_s  of_int_s
 
 let random_int32_us () = Random.int32 Int32.max_int
-let () = test_conv 31 random_int32_us to_int32_us of_int32_us
+let () = test_conv Int32.equal 31 random_int32_us to_int32_us of_int32_us
 let random_int32_s () =
   Int32.add Int32.min_int (Int32.add (random_int32_us ()) (random_int32_us ()))
-let () = test_conv 32 random_int32_s  to_int32_s of_int32_s
+let () = test_conv Int32.equal 32 random_int32_s  to_int32_s of_int32_s
 
 let random_int64_us () = Random.int64 Int64.max_int
-let () = test_conv 63 random_int64_us to_int64_us of_int64_us
+let () = test_conv Int64.equal 63 random_int64_us to_int64_us of_int64_us
 let random_int64_s () =
   Int64.add Int64.min_int (Int64.add (random_int64_us ()) (random_int64_us ()))
-let () = test_conv 64 random_int64_s  to_int64_s of_int64_s
+let () = test_conv Int64.equal 64 random_int64_s  to_int64_s of_int64_s
 
 let random_native_us () = Random.nativeint Nativeint.max_int
 let random_native_s () =
   Nativeint.add Nativeint.min_int
     (Nativeint.add (random_native_us ()) (random_native_us ()))
-let () = test_conv Sys.word_size random_native_s  to_nativeint_s of_nativeint_s
+let () = test_conv Nativeint.equal Sys.word_size random_native_s  to_nativeint_s of_nativeint_s
 let () =
-  test_conv (Sys.word_size-1) random_native_us to_nativeint_us of_nativeint_us
+  test_conv Nativeint.equal (Sys.word_size-1) random_native_us to_nativeint_us of_nativeint_us
 
 (* input/output *)
 
