@@ -43,6 +43,10 @@ val length : t -> int
 (** [Bitv.length] returns the length (number of elements) of the given
     vector. *)
 
+val equal : t -> t -> bool
+(** Returns [true] if two bit vectors are of the same length and
+    with the same bits. *)
+
 val max_length : int
 (** @deprecated Use [exceeds_max_length] instead.
     On a 32-bit platform (e.g. Javascript) the computation of [max_length]

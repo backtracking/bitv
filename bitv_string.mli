@@ -27,6 +27,8 @@ val get : t -> int -> bool
 
 val length : t -> int
 
+val equal : t -> t -> bool
+
 val max_length : int
 
 val copy : t -> t
