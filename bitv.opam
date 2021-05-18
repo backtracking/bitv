@@ -9,7 +9,7 @@ homepage: "https://github.com/backtracking/bitv"
 bug-reports: "https://github.com/backtracking/bitv/issues"
 doc: "https://backtracking.github.io/bitv"
 depends: [
-  "ocaml"
+  "ocaml" {>= "4.03"}
   "dune" {>= "2.0.0"}
 ]
 build: [

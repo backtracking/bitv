@@ -3,8 +3,6 @@
 open Bitv
 open Bitv.M
 
-let (=) = Int.equal
-
 (* 0-length blitting *)
 let v = create 30 true
 let () = blit v 0 v 30 0
@@ -56,8 +54,8 @@ let test_shift n =
   let v = init n (fun _ -> Random.bool ()) in
   let k = Random.int n in
   let w = shiftr v k in
-  for i = 0 to n-1-k do assert (Bool.equal (get v (k+i)) (get w i)) done;
-  for i = n-k to n-1 do assert (Bool.equal (get w i) false) done
+  for i = 0 to n-1-k do assert (get v (k+i) = get w i) done;
+  for i = n-k to n-1 do assert (get w i = false) done
 
 let () =
   for n = 1 to 200 do test_shift n done
@@ -74,7 +72,7 @@ let test_rotate n =
   let v = init n (fun _ -> Random.bool ()) in
   let k = Random.int (2*n) - n in
   let w = rotatel v k in
-  for i = 0 to n-1 do assert (Bool.equal (get v i) (get w ((i + n + k) mod n))) done
+  for i = 0 to n-1 do assert (get v i = get w ((i + n + k) mod n)) done
 
 let () =
   for n = 1 to 200 do test_rotate n done
@@ -110,9 +108,9 @@ let test_conv equal size random fto fof =
   in
   for _k = 1 to 1000 do test (random ()) done
 
-let () = test_conv Int.equal (Sys.word_size-2) Random.bits to_int_us of_int_us
+let () = test_conv (=) (Sys.word_size-2) Random.bits to_int_us of_int_us
 let random_int_s () = min_int + (Random.bits ()) + (Random.bits ())
-let () = test_conv Int.equal (Sys.word_size-1) random_int_s to_int_s  of_int_s
+let () = test_conv (=) (Sys.word_size-1) random_int_s to_int_s  of_int_s
 
 let random_int32_us () = Random.int32 Int32.max_int
 let () = test_conv Int32.equal 31 random_int32_us to_int32_us of_int32_us
