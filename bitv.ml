@@ -30,6 +30,10 @@ type t = {
 
 let length v = v.length
 
+let[@inline] equal (v1:t) (v2:t) = v1 = v2
+(*s Perhaps the polymorphic equality is actually faster or good enough?
+    Did not test it. *)
+
 (*s Each element of the array is an integer containing [bpi] bits, where
     [bpi] is determined according to the machine word size. Since we do not
     use the sign bit, [bpi] is 30 on a 32-bits machine and 62 on a 64-bits

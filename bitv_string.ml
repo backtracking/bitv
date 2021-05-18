@@ -10,6 +10,10 @@ type t = {
 
 let length v = v.length
 
+let[@inline] equal (v1:t) (v2:t) = v1 = v2
+(*s Perhaps the polymorphic equality is actually faster or good enough?
+    Did not test it. *)
+
 let max_length = Sys.max_string_length * 8
 
 let low_mask = Array.init 9 (fun i -> (1 lsl i) - 1)

@@ -11,13 +11,16 @@ let () = assert (length v = 30)
 (* 0-length extraction *)
 let e = sub v 30 0
 let () = assert (length e = 0)
+let () = assert (equal e (Bitv.create 0 true))
 
 (* 0-length concatenation *)
 let w = append v e
 let () = assert (length w = 30)
+let () = assert (equal w v)
 
 let w = append e v
 let () = assert (length w = 30)
+let () = assert (equal w v)
 
 (* filling *)
 let () = fill v 4 11 false
@@ -27,8 +30,8 @@ let () = assert (to_string v = "111111111111111000000000001111")
 
 (* bitwise operations *)
 let s = sub v 2 4
-let () = assert (bw_not (bw_not s) = s)
-let () = assert (bw_and e e = e)
+let () = assert (equal (bw_not (bw_not s)) s)
+let () = assert (equal (bw_and e e) e)
 
 (* iteri_true *)
 let test_iteri_true n =
@@ -43,9 +46,9 @@ let () =
 
 let () =
   let v = of_string "110101110" in
-  assert (shiftl v 1 = of_string "101011100");
-  assert (shiftl v (-1) = of_string "011010111");
-  assert (shiftr v 1 = of_string "011010111")
+  assert (equal (shiftl v 1) (of_string "101011100"));
+  assert (equal (shiftl v (-1)) (of_string "011010111"));
+  assert (equal (shiftr v 1) (of_string "011010111"))
 
 let test_shift n =
   let v = init n (fun _ -> Random.bool ()) in
@@ -61,9 +64,9 @@ let () =
 
 let () =
   let v = of_string "110101110" in
-  assert (rotatel v 1 = of_string "101011101");
-  assert (rotatel v (-1) = of_string "011010111");
-  assert (rotater v 1 = of_string "011010111")
+  assert (equal (rotatel v 1) (of_string "101011101"));
+  assert (equal (rotatel v (-1)) (of_string "011010111"));
+  assert (equal (rotater v 1) (of_string "011010111"))
 
 let test_rotate n =
   let v = init n (fun _ -> Random.bool ()) in
@@ -73,6 +76,27 @@ let test_rotate n =
 
 let () =
   for n = 1 to 200 do test_rotate n done
+
+(* conversions to/from strings *)
+
+let () =
+  let bits0 = "1000011001000000000000000000000100000001110000000000000000000000000000000000011100000000110111000000000000000000000000000000000000000111011100"
+  and bits1 = "1000011001000000000000000000000100000001110000000000000000000111100000000000000000000000110111000000000000000000000000000000000000000111011100"
+  and zeros = "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+  in
+  assert (equal (of_string "1") (of_string "1"));
+  assert (equal (of_string bits0) (of_string bits0));
+  assert (equal (of_string bits1) (of_string bits1));
+  assert (not (equal (of_string "") (of_string "0")));
+  assert (not (equal (of_string "1") (of_string "01")));
+  assert (not (equal (of_string "1") (of_string "10")));
+  assert (not (equal (of_string bits0) (of_string bits1)));
+  assert (not (equal (of_string bits1) (of_string bits0)));
+  assert (String.equal (to_string (of_string "")) "");
+  assert (String.equal (to_string (of_string "0")) "0");
+  assert (String.equal (to_string (of_string zeros)) zeros);
+  assert (String.equal (to_string (of_string bits0)) bits0);
+  assert (String.equal (to_string (of_string bits1)) bits1)
 
 (* conversions to/from integers *)
 
@@ -118,11 +142,11 @@ let test_io v =
   let c = open_in f in
   let w = input_bin c in
   close_in c;
-  try Sys.remove f with _ -> ();
-  assert (v = w)
+  begin try Sys.remove f with _ -> () end;
+  assert (equal v w)
 
 let test_bytes v =
-  assert (of_bytes (to_bytes v) = v)
+  assert (equal (of_bytes (to_bytes v)) v)
 
 let test_equivalent v =
   let f = Filename.temp_file "bitv" "" in
@@ -134,8 +158,8 @@ let test_equivalent v =
   let b = Bytes.create len in
   really_input c b 0 len;
   close_in c;
-  try Sys.remove f with _ -> ();
-  assert (b = to_bytes v)
+  begin try Sys.remove f with _ -> () end;
+  assert (Bytes.equal b (to_bytes v))
 
 let () =
   for n = 0 to 200 do
@@ -166,7 +190,7 @@ let ones = create 30 true
 let () = assert (pop ones = 30)
 let zeros = create 30 false
 let () = assert (pop zeros = 0)
-let () = assert (bw_or v ones = ones)
-let () = assert (bw_and v ones = v)
-let () = assert (bw_xor v zeros = v)
-let () = assert (bw_xor v ones = bw_not v)
+let () = assert (equal (bw_or v ones) ones)
+let () = assert (equal (bw_and v ones) v)
+let () = assert (equal (bw_xor v zeros) v)
+let () = assert (equal (bw_xor v ones) (bw_not v))
