@@ -145,11 +145,11 @@ let init n f =
     onto the bit vector [v] at index [n]. It assumes that [i..i+m-1] and
     [n..n+m-1] are respectively valid subparts of [a] and [v].
     It is optimized when the bits fit the lowest boundary of an integer
-    (case [j == 0]). *)
+    (case [j = 0]). *)
 
 let blit_bits a i m v n =
   let (i',j) = pos n in
-  if j == 0 then
+  if j = 0 then
     Array.unsafe_set v i'
       ((keep_lowest_bits (a lsr i) m) lor
        (keep_highest_bits (Array.unsafe_get v i') (bpi - m)))
@@ -172,7 +172,7 @@ let blit_bits a i m v n =
 
 let blit_int a v n =
   let (i,j) = pos n in
-  if j == 0 then
+  if j = 0 then
     Array.unsafe_set v i a
   else begin
     Array.unsafe_set v i
@@ -194,7 +194,7 @@ let unsafe_blit v1 ofs1 v2 ofs2 len =
   if len > 0 then
     let (bi,bj) = pos ofs1 in
     let (ei,ej) = pos (ofs1 + len - 1) in
-    if bi == ei then
+    if bi = ei then
       blit_bits (Array.unsafe_get v1 bi) bj len v2 ofs2
     else begin
       blit_bits (Array.unsafe_get v1 bi) bj (bpi - bj) v2 ofs2;
@@ -262,7 +262,7 @@ let blit_zeros v ofs len =
   if len > 0 then
     let (bi,bj) = pos ofs in
     let (ei,ej) = pos (ofs + len - 1) in
-    if bi == ei then
+    if bi = ei then
       blit_bits 0 bj len v ofs
     else begin
       blit_bits 0 bj (bpi - bj) v ofs;
@@ -278,7 +278,7 @@ let blit_ones v ofs len =
   if len > 0 then
     let (bi,bj) = pos ofs in
     let (ei,ej) = pos (ofs + len - 1) in
-    if bi == ei then
+    if bi = ei then
       blit_bits max_int bj len v ofs
     else begin
       blit_bits max_int bj (bpi - bj) v ofs;
@@ -371,7 +371,7 @@ let pop v =
 let hash32 x = ((0x34ca8b09 * x) land 0x3fffffff) lsr 24
 let ntz_arr32 = Array.make 64 0
 let () = for i = 0 to 30 do ntz_arr32.(hash32 (1 lsl i)) <- i done
-let ntz32 x = if x == 0 then 31 else ntz_arr32.(hash32 (x land (-x)))
+let ntz32 x = if x = 0 then 31 else ntz_arr32.(hash32 (x land (-x)))
 
 let iteri_true_ntz32 f v =
   Array.iteri
@@ -392,7 +392,7 @@ let hash64 x = ((martin_constant * x) land max_int) lsr 56
 let ntz_arr64 = Array.make 64 0
 let () = if Sys.word_size >= 64 then
   for i = 0 to 62 do ntz_arr64.(hash64 (1 lsl i)) <- i done
-let ntz64 x = if x == 0 then 63 else ntz_arr64.(hash64 (x land (-x)))
+let ntz64 x = if x = 0 then 63 else ntz_arr64.(hash64 (x land (-x)))
 
 let iteri_true_ntz64 f v =
   Array.iteri
@@ -469,7 +469,7 @@ let bw_not v =
     probably slightly less efficient than a ad-hoc piece of code. *)
 
 let rec shiftl v d =
-  if d == 0 then
+  if d = 0 then
     copy v
   else if d < 0 then
     shiftr v (-d)
@@ -481,7 +481,7 @@ let rec shiftl v d =
   end
 
 and shiftr v d =
-  if d == 0 then
+  if d = 0 then
     copy v
   else if d < 0 then
     shiftl v (-d)
@@ -501,7 +501,7 @@ let rec rotatel v d =
   else
   let n = v.length in
   let d = d mod n in
-  if d == 0 then
+  if d = 0 then
     copy v
   else begin
     let r = create n false in
@@ -516,7 +516,7 @@ and rotater v d =
   else
   let n = v.length in
   let d = d mod n in
-  if d == 0 then
+  if d = 0 then
     copy v
   else begin
     let r = create n false in
@@ -531,7 +531,7 @@ let all_zeros v =
   let b = v.bits in
   let n = Array.length b in
   let rec test i =
-    (i == n) || ((Array.unsafe_get b i == 0) && test (succ i))
+    (i = n) || ((Array.unsafe_get b i = 0) && test (succ i))
   in
   test 0
 
@@ -539,11 +539,11 @@ let all_ones v =
   let b = v.bits in
   let n = Array.length b in
   let rec test i =
-    if i == n - 1 then
+    if i = n - 1 then
       let m = v.length mod bpi in
-      (Array.unsafe_get b i) == (if m == 0 then max_int else low_mask.(m))
+      (Array.unsafe_get b i) = (if m = 0 then max_int else low_mask.(m))
     else
-      ((Array.unsafe_get b i) == max_int) && test (succ i)
+      ((Array.unsafe_get b i) = max_int) && test (succ i)
   in
   test 0
 
