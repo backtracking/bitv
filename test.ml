@@ -100,37 +100,115 @@ let () =
 
 (* conversions to/from integers *)
 
-let test_conv equal size random fto fof =
+module type IntLike = sig
+  type t
+  val equal : t -> t -> bool
+  val add : t -> t -> t
+  val min_int : t
+
+  val size_signed : int
+  val random_unsigned : unit -> t
+
+  val of_unsigned : t -> Bitv.t
+  val of_signed : t -> Bitv.t
+  val to_unsigned : Bitv.t -> t
+  val to_signed : Bitv.t -> t
+end
+
+module type Gen = sig
+  type t
+  val equal : t -> t -> bool
+  val size : int
+  val random : unit -> t
+  val of_ : t -> Bitv.t
+  val to_ : Bitv.t -> t
+end
+
+module UnsignedGen (I : IntLike) : Gen =
+struct
+  include I
+  let size = size_signed - 1
+  let random = random_unsigned
+  let of_ = of_unsigned
+  let to_ = to_unsigned
+end
+
+module SignedGen (I : IntLike) : Gen =
+struct
+  include I
+  let size = size_signed
+  let random () = add min_int (add (random_unsigned ()) (random_unsigned ()))
+  let of_ = of_signed
+  let to_ = to_signed
+end
+
+let test_conv (gen : (module Gen)) =
+  let open (val gen) in
   let test x =
-    let v = fof x in
+    let v = of_ x in
     assert (length v = size);
-    assert (equal (fto v) x)
+    assert (equal (to_ v) x)
   in
   for _k = 1 to 1000 do test (random ()) done
 
-let () = test_conv (=) (Sys.word_size-2) Random.bits to_int_us of_int_us
-let random_int_s () = min_int + (Random.bits ()) + (Random.bits ())
-let () = test_conv (=) (Sys.word_size-1) random_int_s to_int_s  of_int_s
+module Int : IntLike with type t = int = struct
+  (* The following four lines should be replaced by [include Int] once
+     we require OCaml 4.08 or newer *)
+  type t = int
+  let equal : int -> int -> bool = (=)
+  let add = (+)
+  let min_int = min_int
 
-let random_int32_us () = Random.int32 Int32.max_int
-let () = test_conv Int32.equal 31 random_int32_us to_int32_us of_int32_us
-let random_int32_s () =
-  Int32.add Int32.min_int (Int32.add (random_int32_us ()) (random_int32_us ()))
-let () = test_conv Int32.equal 32 random_int32_s  to_int32_s of_int32_s
+  let size_signed = Sys.int_size
+  (* [Random.int] and [Random.bits] do not generate anything above 2^30.
+     Until ocaml/ocaml#9489 is resolved, the easiest workaround seems to
+     be using [Random.int64]. It is also unclear whether we want to depend
+     on OCaml 4.13+ just for the new generator for [int]. *)
+  let () = assert (Sys.int_size <= 64) (* would fail when 64bit -> 128bit *)
+  let random_unsigned () = Int64.to_int (Random.int64 (Int64.of_int max_int))
+  let of_unsigned = of_int_us
+  let to_unsigned = to_int_us
+  let of_signed = of_int_s
+  let to_signed = to_int_s
+end
+let () = test_conv (module UnsignedGen(Int))
+let () = test_conv (module SignedGen(Int))
 
-let random_int64_us () = Random.int64 Int64.max_int
-let () = test_conv Int64.equal 63 random_int64_us to_int64_us of_int64_us
-let random_int64_s () =
-  Int64.add Int64.min_int (Int64.add (random_int64_us ()) (random_int64_us ()))
-let () = test_conv Int64.equal 64 random_int64_s  to_int64_s of_int64_s
+module Int32 : IntLike with type t = int32 = struct
+  include Int32
+  let size_signed = 32
+  let random_unsigned () = Random.int32 max_int
+  let of_unsigned = of_int32_us
+  let to_unsigned = to_int32_us
+  let of_signed = of_int32_s
+  let to_signed = to_int32_s
+end
+let () = test_conv (module UnsignedGen(Int32))
+let () = test_conv (module SignedGen(Int32))
 
-let random_native_us () = Random.nativeint Nativeint.max_int
-let random_native_s () =
-  Nativeint.add Nativeint.min_int
-    (Nativeint.add (random_native_us ()) (random_native_us ()))
-let () = test_conv Nativeint.equal Sys.word_size random_native_s  to_nativeint_s of_nativeint_s
-let () =
-  test_conv Nativeint.equal (Sys.word_size-1) random_native_us to_nativeint_us of_nativeint_us
+module Int64 : IntLike with type t = int64 = struct
+  include Int64
+  let size_signed = 64
+  let random_unsigned () = Random.int64 max_int
+  let of_unsigned = of_int64_us
+  let to_unsigned = to_int64_us
+  let of_signed = of_int64_s
+  let to_signed = to_int64_s
+end
+let () = test_conv (module UnsignedGen(Int64))
+let () = test_conv (module SignedGen(Int64))
+
+module Nativeint : IntLike with type t = nativeint = struct
+  include Nativeint
+  let size_signed = Sys.word_size
+  let random_unsigned () = Random.nativeint max_int
+  let of_unsigned = of_nativeint_us
+  let to_unsigned = to_nativeint_us
+  let of_signed = of_nativeint_s
+  let to_signed = to_nativeint_s
+end
+let () = test_conv (module UnsignedGen(Nativeint))
+let () = test_conv (module SignedGen(Nativeint))
 
 (* input/output *)
 
