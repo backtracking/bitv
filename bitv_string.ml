@@ -16,6 +16,10 @@ let[@inline] equal (v1:t) (v2:t) = v1 = v2
 
 let max_length = Sys.max_string_length * 8
 
+let exceeds_max_length n =
+  let s = n / 8 in
+  (if n mod 8 = 0 then s else s + 1) > Sys.max_string_length
+
 let low_mask = Array.init 9 (fun i -> (1 lsl i) - 1)
 
 let create n b =
