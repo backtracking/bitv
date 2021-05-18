@@ -28,6 +28,9 @@ val get : t -> int -> bool
 val length : t -> int
 
 val max_length : int
+(** @deprecated Use [exceed_max_length] instead. *)
+
+val exceeds_max_length : int -> bool
 
 val copy : t -> t
 
