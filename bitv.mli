@@ -210,6 +210,12 @@ val input_bin: in_channel -> t
 val to_bytes: t -> bytes
 val of_bytes: bytes -> t
 
+val to_char_iter: t -> (char -> unit) -> unit
+(** [to_char_iter v f] will call [f byte] for each [byte] it intends to write. *)
+
+val of_char_stream: (unit -> char) -> t
+(** [of_char_iter f] will call [f ()] for read the next byte to decode. *)
+
 (** {2 Conversions to and from lists of integers}
 
     The list gives the indices of bits which are set (ie [true]). *)

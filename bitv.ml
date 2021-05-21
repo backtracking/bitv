@@ -590,38 +590,38 @@ let int_of_bytes b =
   in
   build 0 7
 
-let to_bin write v =
+let to_char_iter v write =
   let len = length v in
   let rec loop i pow byte =
     let byte = if unsafe_get v i then byte lor pow else byte in
     if i = len - 1 then
-      write byte
+      write (Char.chr byte)
     else if i mod 8 = 7 then begin
-      write byte;
+      write (Char.chr byte);
       loop (i + 1) 1 0
     end else
       loop (i + 1) (pow * 2) byte
   in
   bytes_of_int len
-  |> Bytes.iter (fun b -> Char.code b |> write);
+  |> Bytes.iter write;
   if len > 0 then loop 0 1 0
 
 let output_bin out_ch v =
-  let write = output_byte out_ch in
-  to_bin write v
+  let write = output_char out_ch in
+  to_char_iter v write
 
 let to_bytes t =
   let buf = Buffer.create 0 in
-  let write i = Buffer.add_char buf (Char.chr i) in
-  to_bin write t;
+  let write i = Buffer.add_char buf i in
+  to_char_iter t write;
   Buffer.to_bytes buf
 
-let of_bin read =
-  let len = Bytes.init 8 (fun _ -> read () |> Char.chr) |> int_of_bytes in
+let of_char_stream read =
+  let len = Bytes.init 8 (fun _ -> read ()) |> int_of_bytes in
   let bits = create len false in
   let rec loop i byte =
     if i < len then begin
-      let byte = if i mod 8 = 0 then read () else byte in
+      let byte = if i mod 8 = 0 then Char.code (read ()) else byte in
       if byte land 1 = 1 then unsafe_set bits i true;
       loop (i+1) (byte / 2)
     end
@@ -630,18 +630,18 @@ let of_bin read =
   bits
 
 let input_bin in_ch =
-  let read () = input_byte in_ch in
-  of_bin read
+  let read () = input_char in_ch in
+  of_char_stream read
 
 let of_bytes b =
   let read =
     let p = ref 0 in
     fun () ->
-      let ret = Bytes.get b !p |> Char.code in
+      let ret = Bytes.get b !p in
       incr p;
       ret
   in
-  of_bin read
+  of_char_stream read
 
 (* Iteration on all bit vectors of length [n] using a Gray code. *)
 
