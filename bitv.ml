@@ -580,7 +580,7 @@ module M = S(struct let least_first = false end)
 (*s Input/output in a machine-independent format. *)
 
 let bytes_of_int x =
-  Bytes.init 8 (fun i -> Char.chr ((x lsr (8 * i)) land 0xFF))
+  Bytes.init 8 (fun i -> Char.unsafe_chr ((x lsr (8 * i)) land 0xFF))
 
 let int_of_bytes b =
   assert (Bytes.length b = 8);
@@ -595,9 +595,9 @@ let to_char_iter v write =
   let rec loop i pow byte =
     let byte = if unsafe_get v i then byte lor pow else byte in
     if i = len - 1 then
-      write (Char.chr byte)
+      write (Char.unsafe_chr byte)
     else if i mod 8 = 7 then begin
-      write (Char.chr byte);
+      write (Char.unsafe_chr byte);
       loop (i + 1) 1 0
     end else
       loop (i + 1) (pow * 2) byte
