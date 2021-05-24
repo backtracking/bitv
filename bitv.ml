@@ -618,7 +618,7 @@ let to_bytes t =
   iter_bin t write;
   Buffer.to_bytes buf
 
-let from_char_stream read =
+let from_stream_bin read =
   let len = Bytes.init 8 (fun _ -> read ()) |> int_of_bytes in
   let bits = create len false in
   let rec loop i byte =
@@ -633,7 +633,7 @@ let from_char_stream read =
 
 let input_bin in_ch =
   let read () = input_char in_ch in
-  from_char_stream read
+  from_stream_bin read
 
 let of_bytes b =
   let read =
@@ -643,7 +643,7 @@ let of_bytes b =
       incr p;
       ret
   in
-  from_char_stream read
+  from_stream_bin read
 
 (* Iteration on all bit vectors of length [n] using a Gray code. *)
 
