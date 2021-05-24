@@ -205,6 +205,54 @@ let bw_not v =
   normalize r;
   r
 
+(*s Input/output in a machine-independent format. *)
+
+let length_bin v = 8 + Bytes.length v.bits
+
+let bytes_of_int x =
+  Bytes.init 8 (fun i -> Char.unsafe_chr ((x lsr (8 * i)) land 0xFF))
+
+let int_of_bytes b =
+  assert (Bytes.length b = 8);
+  let rec build x i =
+    if i < 0 then x
+    else build ((x lsl 8) lor Char.code (Bytes.get b i)) (pred i)
+  in
+  build 0 7
+
+let iter_bin v write =
+  bytes_of_int (length v) |> Bytes.iter write;
+  Bytes.iter write v.bits
+
+let output_bin out_ch v =
+  let write = output_char out_ch in
+  iter_bin v write
+
+let to_bytes t =
+  let buf = Buffer.create 0 in
+  let write i = Buffer.add_char buf i in
+  iter_bin t write;
+  Buffer.to_bytes buf
+
+let from_stream_bin read =
+  let length = Bytes.init 8 (fun _ -> read ()) |> int_of_bytes in
+  let length_in_bytes = (length lsl 3) + (if length land 7 = 0 then 0 else 1) in
+  { length; bits = Bytes.init length_in_bytes (fun _ -> read ())}
+
+let input_bin in_ch =
+  let read () = input_char in_ch in
+  from_stream_bin read
+
+let of_bytes b =
+  let read =
+    let p = ref 0 in
+    fun () ->
+      let ret = Bytes.get b !p in
+      incr p;
+      ret
+  in
+  from_stream_bin read
+
 (*s Coercions to/from lists of integers *)
 
 let of_list l =

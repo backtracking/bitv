@@ -58,6 +58,14 @@ val bw_or  : t -> t -> t
 val bw_xor : t -> t -> t
 val bw_not : t -> t
 
+val length_bin: t -> int
+val output_bin: out_channel -> t -> unit
+val input_bin: in_channel -> t
+val to_bytes: t -> bytes
+val of_bytes: bytes -> t
+val iter_bin: t -> (char -> unit) -> unit
+val from_stream_bin: (unit -> char) -> t
+
 val to_list : t -> int list
 val of_list : int list -> t
 val of_list_with_length : int list -> int -> t

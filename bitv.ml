@@ -579,6 +579,8 @@ module M = S(struct let least_first = false end)
 
 (*s Input/output in a machine-independent format. *)
 
+let length_bin v = 8 + length v / 8 + (if length v mod 8 > 0 then 1 else 0)
+
 let bytes_of_int x =
   Bytes.init 8 (fun i -> Char.unsafe_chr ((x lsr (8 * i)) land 0xFF))
 
@@ -590,7 +592,7 @@ let int_of_bytes b =
   in
   build 0 7
 
-let to_char_iter v write =
+let iter_bin v write =
   let len = length v in
   let rec loop i pow byte =
     let byte = if unsafe_get v i then byte lor pow else byte in
@@ -608,15 +610,15 @@ let to_char_iter v write =
 
 let output_bin out_ch v =
   let write = output_char out_ch in
-  to_char_iter v write
+  iter_bin v write
 
 let to_bytes t =
   let buf = Buffer.create 0 in
   let write i = Buffer.add_char buf i in
-  to_char_iter t write;
+  iter_bin t write;
   Buffer.to_bytes buf
 
-let of_char_stream read =
+let from_char_stream read =
   let len = Bytes.init 8 (fun _ -> read ()) |> int_of_bytes in
   let bits = create len false in
   let rec loop i byte =
@@ -631,7 +633,7 @@ let of_char_stream read =
 
 let input_bin in_ch =
   let read () = input_char in_ch in
-  of_char_stream read
+  from_char_stream read
 
 let of_bytes b =
   let read =
@@ -641,7 +643,7 @@ let of_bytes b =
       incr p;
       ret
   in
-  of_char_stream read
+  from_char_stream read
 
 (* Iteration on all bit vectors of length [n] using a Gray code. *)
 
@@ -814,5 +816,3 @@ let select_to f32 f64 = match Sys.word_size with
   | _ -> assert false
 let to_nativeint_s = select_to to_int32_s to_int64_s
 let to_nativeint_us = select_to to_int32_us to_int64_us
-
-
