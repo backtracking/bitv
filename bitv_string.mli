@@ -58,6 +58,9 @@ val bw_or  : t -> t -> t
 val bw_xor : t -> t -> t
 val bw_not : t -> t
 
+val all_zeros : t -> bool
+val all_ones : t -> bool
+
 val to_list : t -> int list
 val of_list : int list -> t
 val of_list_with_length : int list -> int -> t

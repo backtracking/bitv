@@ -205,6 +205,28 @@ let bw_not v =
   normalize r;
   r
 
+(*s Testing for all zeros and all ones. *)
+
+let all_zeros v =
+  let b = v.bits in
+  let n = Bytes.length b in
+  let rec test i =
+    (i = n) || ((byte b i = 0) && test (succ i))
+  in
+  test 0
+
+let all_ones v =
+  let b = v.bits in
+  let n = Bytes.length b in
+  let rec test i =
+    if i = n - 1 then
+      let m = v.length lsl 3 in
+      (byte b i) = (if m = 0 then 255 else low_mask.(m))
+    else
+      ((byte b i) = 255) && test (succ i)
+  in
+  test 0
+
 (*s Coercions to/from lists of integers *)
 
 let of_list l =
