@@ -13,8 +13,6 @@
 (*                                                                        *)
 (**************************************************************************)
 
-(*i $Id: bitv.ml,v 1.26 2012/08/14 07:26:00 filliatr Exp $ i*)
-
 (*s Bit vectors. The interface and part of the code are borrowed from the
     [Array] module of the ocaml standard library (but things are simplified
     here since we can always initialize a bit vector). This module also
