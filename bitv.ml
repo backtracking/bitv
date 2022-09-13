@@ -428,6 +428,14 @@ let bw_and v1 v2 =
   done;
   { length = l; bits = a }
 
+let tanimoto v1 v2 =
+  let l = v1.length in
+  if l <> v2.length then invalid_arg "Bitv.tanimoto";
+  let a = pop v1 in
+  let b = pop v2 in
+  let c = pop (bw_and v1 v2) in
+  (float c) /. (float (a + b - c))
+
 let bw_or v1 v2 =
   let l = v1.length in
   if l <> v2.length then invalid_arg "Bitv.bw_or";
@@ -812,5 +820,3 @@ let select_to f32 f64 = match Sys.word_size with
   | _ -> assert false
 let to_nativeint_s = select_to to_int32_s to_int64_s
 let to_nativeint_us = select_to to_int32_us to_int64_us
-
-

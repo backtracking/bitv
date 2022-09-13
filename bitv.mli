@@ -47,6 +47,12 @@ val equal : t -> t -> bool
 (** Returns [true] if two bit vectors are of the same length and
     with the same bits. *)
 
+val tanimoto : t -> t -> float
+(** [Bitv.tanimoto v1 v2] is |inter(v1,v2)| / |union(v1,v2)|.
+    Also called the Jaccard score.
+    (1 - tanimoto) is a proper distance.
+    raises [Invalid_argument] if the two vectors do not have the same length *)
+
 val max_length : int
 (** @deprecated Use [exceeds_max_length] instead.
     On a 32-bit platform (e.g. Javascript) the computation of [max_length]
