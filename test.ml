@@ -33,6 +33,18 @@ let s = sub v 2 4
 let () = assert (equal (bw_not (bw_not s)) s)
 let () = assert (equal (bw_and e e) e)
 
+(* Tanimoto score *)
+let () =
+  let b0 = create 10 false in
+  let b1 = create 10 true in
+  let even = init 10 (fun i -> i mod 2 = 0) in
+  let odd = init 10 (fun i -> i mod 2 = 1) in
+  assert (tanimoto b0 b1 = 0.);
+  assert (tanimoto b1 b1 = 1.);
+  assert (compare (tanimoto b0 b0) nan = 0);
+  assert (tanimoto even b1 = 0.5);
+  assert (tanimoto odd b1 = 0.5)
+
 (* iteri_true *)
 let test_iteri_true n =
   let k = 1 + Random.int 5 in
