@@ -474,6 +474,55 @@ let tanimoto v1 v2 =
   let c = pop (bw_and v1 v2) in
   (float c) /. (float (a + b - c))
 
+(* Input/output in a machine-independent format. *)
+
+let bytes_of_int x =
+  Bytes.init 8 (fun i -> Char.chr ((x lsr (8 * i)) land 0xFF))
+
+let int_of_bytes b =
+  assert (Bytes.length b = 8);
+  let rec build x i =
+    if i < 0 then x
+    else build ((x lsl 8) lor Char.code (Bytes.get b i)) (pred i)
+  in
+  build 0 7
+
+let nb_of_bytes len =
+  len lsr 3 + if len land 7 = 0 then 0 else 1
+
+let to_bin write v =
+  bytes_of_int v.length |> Bytes.iter write;
+  Bytes.iter write v.bits
+
+let output_bin out_ch v =
+  let write = output_char out_ch in
+  to_bin write v
+
+let to_bytes t =
+  let buf = Buffer.create 0 in
+  let write x = Buffer.add_char buf x in
+  to_bin write t;
+  Buffer.to_bytes buf
+
+let of_bin read =
+  let len = Bytes.init 8 (fun _ -> read ()) |> int_of_bytes in
+  let v = create len false in
+  let b = v.bits in
+  for i = 0 to Bytes.length b - 1 do
+    Bytes.unsafe_set b i (read ())
+  done;
+  v
+
+let input_bin in_ch =
+  let read () = input_char in_ch in
+  of_bin read
+
+let of_bytes b =
+  let read =
+    let p = ref 0 in
+    fun () -> let ret = Bytes.get b !p in incr p; ret in
+  of_bin read
+
 (*
 
 (*s Handling bits by packets is the key for efficiency of functions
@@ -562,72 +611,6 @@ let fill v ofs len b =
   if ofs < 0 || len < 0 || ofs + len > v.length then invalid_arg "Bitv.fill";
   if b then blit_ones v.bits ofs len else blit_zeros v.bits ofs len
 
-
-(*s Input/output in a machine-independent format. *)
-
-let bytes_of_int x =
-  Bytes.init 8 (fun i -> Char.chr ((x lsr (8 * i)) land 0xFF))
-
-let int_of_bytes b =
-  assert (Bytes.length b = 8);
-  let rec build x i =
-    if i < 0 then x
-    else build ((x lsl 8) lor Char.code (Bytes.get b i)) (pred i)
-  in
-  build 0 7
-
-let to_bin write v =
-  let len = length v in
-  let rec loop i pow byte =
-    let byte = if unsafe_get v i then byte lor pow else byte in
-    if i = len - 1 then
-      write byte
-    else if i mod 8 = 7 then begin
-      write byte;
-      loop (i + 1) 1 0
-    end else
-      loop (i + 1) (pow * 2) byte
-  in
-  bytes_of_int len
-  |> Bytes.iter (fun b -> Char.code b |> write);
-  if len > 0 then loop 0 1 0
-
-let output_bin out_ch v =
-  let write = output_byte out_ch in
-  to_bin write v
-
-let to_bytes t =
-  let buf = Buffer.create 0 in
-  let write i = Buffer.add_char buf (Char.chr i) in
-  to_bin write t;
-  Buffer.to_bytes buf
-
-let of_bin read =
-  let len = Bytes.init 8 (fun _ -> read () |> Char.chr) |> int_of_bytes in
-  let bits = create len false in
-  let rec loop i byte =
-    if i < len then begin
-      let byte = if i mod 8 = 0 then read () else byte in
-      if byte land 1 = 1 then unsafe_set bits i true;
-      loop (i+1) (byte / 2)
-    end
-  in
-  if len > 0 then loop 0 0;
-  bits
-
-let input_bin in_ch =
-  let read () = input_byte in_ch in
-  of_bin read
-
-let of_bytes b =
-  let read =
-    let p = ref 0 in
-    fun () ->
-      let ret = Bytes.get b !p |> Char.code in
-      incr p;
-      ret
-  in
-  of_bin read
 
 (*s To/from integers. *)
 

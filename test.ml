@@ -169,6 +169,7 @@ let random_native_s () =
 let () = test_conv Sys.word_size random_native_s  to_nativeint_s of_nativeint_s
 let () =
   test_conv (Sys.word_size-1) random_native_us to_nativeint_us of_nativeint_us
+***)
 
 (* input/output *)
 
@@ -206,7 +207,6 @@ let () =
     test_bytes bv;
     test_equivalent bv;
   done
-***)
 
 let v = create 30 true
 let () = assert (length v = 30)

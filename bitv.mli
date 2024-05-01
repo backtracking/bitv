@@ -210,13 +210,11 @@ end
     For a bit vector of length [n], the number of bytes of this external
     representation is 8+ceil(n/8). *)
 
-(***
 val output_bin: out_channel -> t -> unit
 val input_bin: in_channel -> t
 
 val to_bytes: t -> bytes
 val of_bytes: bytes -> t
-***)
 
 (** {2 Conversions to and from lists of integers}
 
