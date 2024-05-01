@@ -92,8 +92,22 @@ let init n f =
 
 let fill v ofs len b =
   if ofs < 0 || len < 0 || ofs + len > v.length then invalid_arg "Bitv.fill";
-  (* TODO: more efficient version using blit_ones and blit_zeros *)
-  for i = ofs to ofs + len - 1 do unsafe_set v i b done
+  if len > 0 then (
+  (* incomplete first byte, if any (8-r bits) *)
+  let r = ofs land 7 in
+  let first = if r = 0 then 0 else min len (8-r) in
+  for i = ofs to ofs + first-1 do unsafe_set v i b done;
+  (* full bytes in the middle *)
+  let start = (ofs + first) lsr 3 in
+  let n = (len - first) lsr 3 in
+  let x = Char.chr (if b then 0xFF else 0) in
+  for i = start to start + n - 1 do Bytes.unsafe_set v.bits i x done;
+  (* incomplete last byte, if any *)
+  let s = (len - first) land 7 in
+  if s > 0 then
+    let stop = ofs + len in
+    for i = stop - s to stop - 1 do unsafe_set v i b done
+  )
 
 (* All the iterators are implemented as for traditional arrays, using
    [unsafe_get]. For [iter] and [map], we do not precompute [(f
@@ -188,8 +202,9 @@ let pop8 n = Array.unsafe_get pop8 n
 
 let pop v =
   let n = Bytes.length v.bits in
+  let b = v.bits in
   let rec loop acc i =
-    if i >= n then acc else loop (acc + pop8 (byte v.bits i)) (i + 1) in
+    if i >= n then acc else loop (acc + pop8 (byte b i)) (i + 1) in
   loop 0 0
 
 (* Bitwise operations. It is straigthforward, since bitwise operations
@@ -523,96 +538,12 @@ let of_bytes b =
     fun () -> let ret = Bytes.get b !p in incr p; ret in
   of_bin read
 
-(*
-
-(*s Handling bits by packets is the key for efficiency of functions
-    [append], [concat], [sub] and [blit].
-    We start by a very general function [blit_bits a i m v n] which blits
-    the bits [i] to [i+m-1] of a native integer [a]
-    onto the bit vector [v] at index [n]. It assumes that [i..i+m-1] and
-    [n..n+m-1] are respectively valid subparts of [a] and [v].
-    It is optimized when the bits fit the lowest boundary of an integer
-    (case [j == 0]). *)
-
-let blit_bits a i m v n =
-  let (i',j) = pos n in
-  if j == 0 then
-    Array.unsafe_set v i'
-      ((keep_lowest_bits (a lsr i) m) lor
-       (keep_highest_bits (Array.unsafe_get v i') (bpi - m)))
-  else
-    let d = m + j - bpi in
-    if d > 0 then begin
-      Array.unsafe_set v i'
-	(((keep_lowest_bits (a lsr i) (bpi - j)) lsl j) lor
-	 (keep_lowest_bits (Array.unsafe_get v i') j));
-      Array.unsafe_set v (succ i')
-	((keep_lowest_bits (a lsr (i + bpi - j)) d) lor
-	 (keep_highest_bits (Array.unsafe_get v (succ i')) (bpi - d)))
-    end else
-      Array.unsafe_set v i'
-	(((keep_lowest_bits (a lsr i) m) lsl j) lor
-	 ((Array.unsafe_get v i') land (low_mask.(j) lor high_mask.(-d))))
-
-(*s [blit_int] implements [blit_bits] in the particular case when
-    [i=0] and [m=bpi] i.e. when we blit all the bits of [a]. *)
-
-let blit_int a v n =
-  let (i,j) = pos n in
-  if j == 0 then
-    Array.unsafe_set v i a
-  else begin
-    Array.unsafe_set v i
-      ( (keep_lowest_bits (Array.unsafe_get v i) j) lor
-       ((keep_lowest_bits a (bpi - j)) lsl j));
-    Array.unsafe_set v (succ i)
-      ((keep_highest_bits (Array.unsafe_get v (succ i)) (bpi - j)) lor
-       (a lsr (bpi - j)))
-  end
-
-
-(*s Filling is a particular case of blitting with a source made of all
-    ones || all zeros. Thus we instanciate [unsafe_blit], with 0 and
-    [max_int]. *)
-
-let blit_zeros v ofs len =
-  if len > 0 then
-    let (bi,bj) = pos ofs in
-    let (ei,ej) = pos (ofs + len - 1) in
-    if bi == ei then
-      blit_bits 0 bj len v ofs
-    else begin
-      blit_bits 0 bj (bpi - bj) v ofs;
-      let n = ref (ofs + bpi - bj) in
-      for _i = succ bi to pred ei do
-	blit_int 0 v !n;
-	n := !n + bpi
-      done;
-      blit_bits 0 0 (succ ej) v !n
-    end
-
-let blit_ones v ofs len =
-  if len > 0 then
-    let (bi,bj) = pos ofs in
-    let (ei,ej) = pos (ofs + len - 1) in
-    if bi == ei then
-      blit_bits max_int bj len v ofs
-    else begin
-      blit_bits max_int bj (bpi - bj) v ofs;
-      let n = ref (ofs + bpi - bj) in
-      for _i = succ bi to pred ei do
-	blit_int max_int v !n;
-	n := !n + bpi
-      done;
-      blit_bits max_int 0 (succ ej) v !n
-    end
-
-let fill v ofs len b =
-  if ofs < 0 || len < 0 || ofs + len > v.length then invalid_arg "Bitv.fill";
-  if b then blit_ones v.bits ofs len else blit_zeros v.bits ofs len
-
-
 (*s To/from integers. *)
+
+(***
+let bpi =
+  let n = Sys.int_size in
+  if n = 31 || n = 63 then n-1 else n
 
 (* [int] *)
 let of_int_us i =

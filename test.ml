@@ -208,18 +208,19 @@ let () =
     test_equivalent bv;
   done
 
-let v = create 30 true
-let () = assert (length v = 30)
-let () = assert (get v 17)
-
-let e = create 0 false
-let () = assert (length e = 0)
-
-(* filling *)
-let () = fill v 4 11 false
-let () = fill v 30 0 true
-let () = assert (length v = 30)
-let () = assert (pop v = 19)
+(* fill *)
+let () =
+  for len = 0 to 100 do
+    let v = create len false in
+    for i = 0 to len do
+      fill v 0 i true;
+      assert (pop v = i)
+    done;
+    for i = len downto 0 do
+      fill v i (len - i) false;
+      assert (pop v = i)
+    done
+  done
 
 let ones = create 30 true
 let () = assert (pop ones = 30)
