@@ -211,19 +211,23 @@ end
     representation is 4+ceil(n/8) on a 32-bit machine and 8+ceil(n/8) on
     a 64-bit machine. *)
 
+(***
 val output_bin: out_channel -> t -> unit
 val input_bin: in_channel -> t
 
 val to_bytes: t -> bytes
 val of_bytes: bytes -> t
+***)
 
 (** {2 Conversions to and from lists of integers}
 
-    The list gives the indices of bits which are set (ie [true]). *)
+    The list gives the indices of bits which are set (i.e. [true]). *)
 
 val to_list : t -> int list
 val of_list : int list -> t
 val of_list_with_length : int list -> int -> t
+
+(***
 
 (** {2 Interpretation of bit vectors as integers}
 
@@ -261,6 +265,8 @@ val of_nativeint_s : Nativeint.t -> t
 val to_nativeint_s : t -> Nativeint.t
 val of_nativeint_us : Nativeint.t -> t
 val to_nativeint_us : t -> Nativeint.t
+
+***)
 
 (** {2 Only if you know what you are doing...} *)
 

@@ -7,7 +7,8 @@
 (library
  (public_name bitv.string)
  (name bitv_string)
- (modules bitv_string))
+ (modules bitv_string)
+ (libraries bitv))
 
 (test
  (name test)
@@ -18,3 +19,9 @@
  (name sieve)
  (modules sieve)
  (libraries bitv bitv.string))
+
+(executable
+ (name bench)
+ (modules bench)
+ (promote (until-clean))
+ (libraries bitv))

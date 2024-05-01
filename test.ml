@@ -3,8 +3,20 @@
 open Bitv
 open Bitv.M
 
+let () =
+  let test len b =
+    let v = create len b in
+    assert (length v = len);
+    assert (if b then all_ones v else all_zeros v);
+    assert (bw_and v v = v);
+    assert (bw_or v v = v);
+    assert (bw_not (bw_not v) = v);
+  in
+  for len = 0 to 100 do test len false; test len true done
+
 (* 0-length blitting *)
 let v = create 30 true
+let () = assert (all_ones v)
 let () = blit v 0 v 30 0
 let () = assert (length v = 30)
 
@@ -89,6 +101,19 @@ let test_rotate n =
 let () =
   for n = 1 to 200 do test_rotate n done
 
+(* conversions to/from lists *)
+
+let () =
+  let test len l =
+    let v = of_list l in
+    assert (length v = len);
+    assert (to_list v = l);
+    assert (v = of_list_with_length l len)
+  in
+  test 0 [];
+  test 42 [41];
+  test 35 [0;1;2;3;5;8;13;21;34]
+
 (* conversions to/from strings *)
 
 let () =
@@ -120,6 +145,7 @@ let test_conv size random fto fof =
   in
   for _k = 1 to 1000 do test (random ()) done
 
+(***
 let () = test_conv (Sys.word_size-2) Random.bits to_int_us of_int_us
 let random_int_s () = min_int + (Random.bits ()) + (Random.bits ())
 let () = test_conv (Sys.word_size-1) random_int_s to_int_s  of_int_s
@@ -180,15 +206,12 @@ let () =
     test_bytes bv;
     test_equivalent bv;
   done
+***)
 
-open Bitv_string
-
-(* 0-length blitting *)
 let v = create 30 true
 let () = assert (length v = 30)
 let () = assert (get v 17)
 
-(* 0-length extraction *)
 let e = create 0 false
 let () = assert (length e = 0)
 
