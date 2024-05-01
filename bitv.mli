@@ -208,8 +208,7 @@ end
     bytes, in a way that is compact, independent of the machine architecture,
     and independent of the OCaml version.
     For a bit vector of length [n], the number of bytes of this external
-    representation is 4+ceil(n/8) on a 32-bit machine and 8+ceil(n/8) on
-    a 64-bit machine. *)
+    representation is 8+ceil(n/8). *)
 
 val output_bin: out_channel -> t -> unit
 val input_bin: in_channel -> t
