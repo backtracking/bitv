@@ -227,13 +227,11 @@ val of_list_with_length : int list -> int -> t
 (** {2 Interpretation of bit vectors as integers}
 
     Least significant bit comes first (ie is at index 0 in the bit vector).
-    [to_xxx] functions truncate when the bit vector is too wide,
-    and raise [Invalid_argument] when it is too short.
+    [to_xxx] functions truncate when the bit vector is too wide.
     Suffix [_s] means that sign bit is kept,
     and [_us] that it is discarded. *)
 
 (** {3 type [int] (length 31/63 with sign, 30/62 without)} *)
-(***
 
 val of_int_s : int -> t
 val to_int_s : t -> int
@@ -260,8 +258,6 @@ val of_nativeint_s : Nativeint.t -> t
 val to_nativeint_s : t -> Nativeint.t
 val of_nativeint_us : Nativeint.t -> t
 val to_nativeint_us : t -> Nativeint.t
-
-***)
 
 (** {2 Only if you know what you are doing...} *)
 

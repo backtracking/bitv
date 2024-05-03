@@ -24,7 +24,8 @@
    array. *)
 
 let[@inline] byte s i = Char.code (Bytes.unsafe_get s i)
-let set_byte s i x = Bytes.unsafe_set s i (Char.chr x)
+
+let set_byte s i x = Bytes.unsafe_set s i (Char.unsafe_chr x)
 
 type t = {
   length : int;
@@ -540,111 +541,57 @@ let of_bytes b =
 
 (*s To/from integers. *)
 
-(***
-let bpi =
-  let n = Sys.int_size in
-  if n = 31 || n = 63 then n-1 else n
+let of_int_gen len getbyte getbit =
+  let v = create len false in
+  for i = 0 to (len lsr 3) - 1 do set_byte v.bits i (getbyte i) done;
+  for i = len land (lnot 7) to len - 1 do unsafe_set v i (getbit i) done;
+  v
 
-(* [int] *)
-let of_int_us i =
-  { length = bpi; bits = [| i land max_int |] }
+let getbyte x i = (x lsr (8*i)) land 0xFF
+let getbit x i = (x lsr i) land 1 > 0
+let of_int_us x =
+  of_int_gen (Sys.int_size - 1) (getbyte x) (getbit x)
+let of_int_s x =
+  of_int_gen Sys.int_size (getbyte x) (getbit x)
+
+let to_int_gen zero shiftor v =
+  let x = ref zero in
+  Bytes.iteri (fun i c -> x := shiftor !x (Char.code c) (8*i)) v.bits;
+  !x
+
+let shiftor x b i = x lor (b lsl i)
 let to_int_us v =
-  if v.length < bpi then invalid_arg "Bitv.to_int_us";
-  v.bits.(0)
-
-let of_int_s i =
-  { length = succ bpi; bits = [| i land max_int; (i lsr bpi) land 1 |] }
+  (* if v.length < Sys.int_size - 1 then invalid_arg "Bitv.to_int_us"; *)
+  to_int_gen 0 shiftor v
 let to_int_s v =
-  if v.length < succ bpi then invalid_arg "Bitv.to_int_s";
-  v.bits.(0) lor (v.bits.(1) lsl bpi)
+  (* if v.length < Sys.int_size then invalid_arg "Bitv.to_int_s"; *)
+  to_int_gen 0 shiftor v
 
-(* [Int32] *)
-let of_int32_us i = match Sys.word_size with
-  | 32 -> { length = 31;
-	    bits = [| (Int32.to_int i) land max_int;
-		      let hi = Int32.shift_right_logical i 30 in
-		      (Int32.to_int hi) land 1 |] }
-  | 64 -> { length = 31; bits = [| (Int32.to_int i) land 0x7fffffff |] }
-  | _ -> assert false
-let to_int32_us v =
-  if v.length < 31 then invalid_arg "Bitv.to_int32_us";
-  match Sys.word_size with
-    | 32 ->
-	Int32.logor (Int32.of_int v.bits.(0))
-	            (Int32.shift_left (Int32.of_int (v.bits.(1) land 1)) 30)
-    | 64 ->
-	Int32.of_int (v.bits.(0) land 0x7fffffff)
-    | _ -> assert false
+let getbyte32 x i =
+  Int32.to_int (Int32.logand (Int32.shift_right x (8*i)) 0xFFl)
+let getbit32 x i =
+  Int32.logand (Int32.shift_right x i) 1l > 0l
+let of_int32_us x =
+  of_int_gen 31 (getbyte32 x) (getbit32 x)
+let of_int32_s x =
+  of_int_gen 32 (getbyte32 x) (getbit32 x)
 
-(* this is 0xffffffff (ocaml >= 3.08 checks for literal overflow) *)
-let ffffffff = (0xffff lsl 16) lor 0xffff
+let shiftor32 x b i = Int32.logor x (Int32.shift_left (Int32.of_int b) i)
+let to_int32_us v = to_int_gen 0l shiftor32 v
+let to_int32_s v = to_int_gen 0l shiftor32 v
 
-let of_int32_s i = match Sys.word_size with
-  | 32 -> { length = 32;
-	    bits = [| (Int32.to_int i) land max_int;
-		      let hi = Int32.shift_right_logical i 30 in
-		      (Int32.to_int hi) land 3 |] }
-  | 64 -> { length = 32; bits = [| (Int32.to_int i) land ffffffff |] }
-  | _ -> assert false
-let to_int32_s v =
-  if v.length < 32 then invalid_arg "Bitv.to_int32_s";
-  match Sys.word_size with
-    | 32 ->
-	Int32.logor (Int32.of_int v.bits.(0))
-	            (Int32.shift_left (Int32.of_int (v.bits.(1) land 3)) 30)
-    | 64 ->
-	Int32.of_int (v.bits.(0) land ffffffff)
-    | _ -> assert false
+let getbyte64 x i =
+  Int64.to_int (Int64.logand (Int64.shift_right x (8*i)) 0xFFL)
+let getbit64 x i =
+  Int64.logand (Int64.shift_right x i) 1L > 0L
+let of_int64_us x =
+  of_int_gen 63 (getbyte64 x) (getbit64 x)
+let of_int64_s x =
+  of_int_gen 64 (getbyte64 x) (getbit64 x)
 
-(* [Int64] *)
-let of_int64_us i = match Sys.word_size with
-  | 32 -> { length = 63;
-	    bits = [| (Int64.to_int i) land max_int;
-		      (let mi = Int64.shift_right_logical i 30 in
-		       (Int64.to_int mi) land max_int);
-		      let hi = Int64.shift_right_logical i 60 in
-		      (Int64.to_int hi) land 7 |] }
-  | 64 -> { length = 63;
-	    bits = [| (Int64.to_int i) land max_int;
-		      let hi = Int64.shift_right_logical i 62 in
-		      (Int64.to_int hi) land 1 |] }
-  | _ -> assert false
-let to_int64_us v =
-  if v.length < 63 then invalid_arg "Bitv.to_int64_us";
-  match Sys.word_size with
-    | 32 ->
-	Int64.logor (Int64.of_int v.bits.(0))
-        (Int64.logor (Int64.shift_left (Int64.of_int v.bits.(1)) 30)
-                     (Int64.shift_left (Int64.of_int (v.bits.(2) land 7)) 60))
-    | 64 ->
-	Int64.logor (Int64.of_int v.bits.(0))
-                    (Int64.shift_left (Int64.of_int (v.bits.(1) land 1)) 62)
-    | _ ->
-        assert false
-
-let of_int64_s i = match Sys.word_size with
-  | 32 -> { length = 64;
-	    bits = [| (Int64.to_int i) land max_int;
-		      (let mi = Int64.shift_right_logical i 30 in
-		       (Int64.to_int mi) land max_int);
-		      let hi = Int64.shift_right_logical i 60 in
-		      (Int64.to_int hi) land 15 |] }
-  | 64 -> { length = 64;
-            bits = [| (Int64.to_int i) land max_int;
-                      let hi = Int64.shift_right_logical i 62 in
-		      (Int64.to_int hi) land 3 |] }
-  | _ -> assert false
-let to_int64_s v =
-  if v.length < 64 then invalid_arg "Bitv.to_int64_s";
-  match Sys.word_size with
-    | 32 ->
-	Int64.logor (Int64.of_int v.bits.(0))
-        (Int64.logor (Int64.shift_left (Int64.of_int v.bits.(1)) 30)
-                     (Int64.shift_left (Int64.of_int (v.bits.(2) land 15)) 60))
-    | 64 ->
-	Int64.logor (Int64.of_int v.bits.(0))
-                    (Int64.shift_left (Int64.of_int (v.bits.(1) land 3)) 62)
-    | _ -> assert false
+let shiftor64 x b i = Int64.logor x (Int64.shift_left (Int64.of_int b) i)
+let to_int64_us v = to_int_gen 0L shiftor64 v
+let to_int64_s v = to_int_gen 0L shiftor64 v
 
 (* [Nativeint] *)
 let select_of f32 f64 = match Sys.word_size with
@@ -659,5 +606,3 @@ let select_to f32 f64 = match Sys.word_size with
   | _ -> assert false
 let to_nativeint_s = select_to to_int32_s to_int64_s
 let to_nativeint_us = select_to to_int32_us to_int64_us
-
-*)

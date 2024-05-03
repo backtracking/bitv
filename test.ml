@@ -137,15 +137,16 @@ let () =
 
 (* conversions to/from integers *)
 
+let () = assert (to_int_s (M.of_string "101010") = 42)
+
 let test_conv size random fto fof =
   let test x =
     let v = fof x in
     assert (length v = size);
     assert (fto v = x)
   in
-  for _k = 1 to 1000 do test (random ()) done
+  for _ = 1 to 1000 do test (random ()) done
 
-(***
 let () = test_conv (Sys.word_size-2) Random.bits to_int_us of_int_us
 let random_int_s () = min_int + (Random.bits ()) + (Random.bits ())
 let () = test_conv (Sys.word_size-1) random_int_s to_int_s  of_int_s
@@ -166,10 +167,9 @@ let random_native_us () = Random.nativeint Nativeint.max_int
 let random_native_s () =
   Nativeint.add Nativeint.min_int
     (Nativeint.add (random_native_us ()) (random_native_us ()))
-let () = test_conv Sys.word_size random_native_s  to_nativeint_s of_nativeint_s
+let () = test_conv Sys.word_size random_native_s to_nativeint_s of_nativeint_s
 let () =
   test_conv (Sys.word_size-1) random_native_us to_nativeint_us of_nativeint_us
-***)
 
 (* input/output *)
 

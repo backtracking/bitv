@@ -21,3 +21,4 @@ config.log
 sieve.opt
 
 bench.exe
+perf.data
