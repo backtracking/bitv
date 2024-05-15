@@ -1,8 +1,8 @@
 
 # 2.0
-  - Switch to bytes-based implementation. This is simpler and faster.
-    Library `Bitv_string` is still there but deprecated (now identical
-    to `Bitv`).
+  - Switch to bytes-based implementation. This is simpler and faster
+    (up to 30% faster).
+    `Bitv_string` is still there but deprecated (now identical to `Bitv`).
   - Functions `to_int...` do not fail anymore when bit vectors are small
     (and behave as if high bits are zero).
   - New function `tanimoto` (Tanimoto score) (contribution by François Berenger)
