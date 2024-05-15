@@ -2,7 +2,7 @@
 
 ## Installation
 
-Installation is available through opam by typing
+Installation is available via opam by typing
 
 ```
 opam install bitv
@@ -10,8 +10,8 @@ opam install bitv
 
 ## Usage
 
-The `bitv` package contains two libraries, `bitv` and `bitv.string`. Their
-documentation is available online [here](https://backtracking.github.io/bitv).
+The library provides a single module, `Bitv`.  The documentation is
+available [here](https://backtracking.github.io/bitv).
 
 ## Bug reports
 
