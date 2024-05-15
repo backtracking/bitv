@@ -13,7 +13,7 @@
 (*                                                                        *)
 (**************************************************************************)
 
-(** Variant implementation. See {!Bitv} for documentation. *)
+(** @deprecated Now identical to {!Bitv}. *)
 
 type t
 

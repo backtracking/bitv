@@ -1,5 +1,11 @@
 
-  - added `tanimoto` (Tanimoto score) (contribution by François Berenger)
+# 2.0
+  - Switch to bytes-based implementation. This is simpler and faster.
+    Library `Bitv_string` is still there but deprecated (now identical
+    to `Bitv`).
+  - Functions `to_int...` do not fail anymore when bit vectors are small
+    (and behave as if high bits are zero).
+  - New function `tanimoto` (Tanimoto score) (contribution by François Berenger)
 
 # 1.6 (06/02/2021)
   - fixed build on 32-bit platforms e.g. js_of_ocaml (patch from Tim Bourke)
