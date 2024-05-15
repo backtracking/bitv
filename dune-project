@@ -1,3 +1,6 @@
-(lang dune 2.0)
+(lang dune 2.7)
+
+(formatting
+ (enabled_for dune))
+
 (name bitv)
-(formatting (enabled_for dune))
