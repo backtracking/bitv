@@ -230,3 +230,32 @@ let () = assert (equal (bw_or v ones) ones)
 let () = assert (equal (bw_and v ones) v)
 let () = assert (equal (bw_xor v zeros) v)
 let () = assert (equal (bw_xor v ones) (bw_not v))
+
+(* fill overflow *)
+let () =
+  let t = create 10 false in
+  try
+    fill t Int.max_int 1 false;
+    assert false
+  with
+    Invalid_argument _ -> assert true
+
+(* blit overflow *)
+let () =
+  let t1 = create 10 false in
+  let t2 = create 10 true in
+  try
+    blit t1 0 t2 Int.max_int 1;
+    assert false
+  with
+    Invalid_argument _ -> assert true
+
+(* sub overflow *)
+let () =
+  let t = create 10 false in
+  try
+    sub t Int.max_int 1 |> ignore;
+    assert false
+  with
+    Invalid_argument _ -> assert true
+
