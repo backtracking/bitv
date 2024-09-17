@@ -92,7 +92,7 @@ let init n f =
   v
 
 let fill v ofs len b =
-  if ofs < 0 || len < 0 || ofs + len > v.length then invalid_arg "Bitv.fill";
+  if ofs < 0 || len < 0 || ofs > v.length - len then invalid_arg "Bitv.fill";
   if len > 0 then (
   (* incomplete first byte, if any (8-r bits) *)
   let r = ofs land 7 in
@@ -316,13 +316,13 @@ let unsafe_blit b1 ofs1 b2 ofs2 len =
       (* TODO: improve in other cases when bytes can be batch-copied *)
 
 let blit v1 ofs1 v2 ofs2 len =
-  if len < 0 || ofs1 < 0 || ofs1 + len > v1.length
-             || ofs2 < 0 || ofs2 + len > v2.length
+  if len < 0 || ofs1 < 0 || ofs1 > v1.length - len
+             || ofs2 < 0 || ofs2 > v2.length - len
   then invalid_arg "Bitv.blit";
   unsafe_blit v1.bits ofs1 v2.bits ofs2 len
 
 let sub v ofs len =
-  if ofs < 0 || len < 0 || ofs + len > v.length then invalid_arg "Bitv.sub";
+  if ofs < 0 || len < 0 || ofs > v.length - len then invalid_arg "Bitv.sub";
   let r = create len false in
   unsafe_blit v.bits ofs r.bits 0 len;
   r
