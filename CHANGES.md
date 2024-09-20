@@ -1,5 +1,5 @@
 
-# 2.0
+# 2.0 (18/05/2024)
   - Switch to bytes-based implementation. This is simpler and faster
     (up to 30% faster).
     `Bitv_string` is still there but deprecated (now identical to `Bitv`).
