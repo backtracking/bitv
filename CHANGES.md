@@ -1,4 +1,7 @@
 
+  - fixed integer overflows in bound tests in `fill`, `blit`, `sub`
+    (fix by Nikolaus Huber)
+
 # 2.0 (18/05/2024)
   - Switch to bytes-based implementation. This is simpler and faster
     (up to 30% faster).
