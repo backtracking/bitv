@@ -406,10 +406,10 @@ let rec rotatel v d =
     rotater v (-d)
   else
   let n = v.length in
-  let d = d mod n in
-  if d == 0 then
+  if d == 0 || n == 0 then
     copy v
   else begin
+    let d = d mod n in
     let r = create n false in
     unsafe_blit v.bits 0 r.bits d (n - d); (* shiftl *)
     unsafe_blit v.bits (n - d) r.bits 0 d; (* wraparound ms to ls *)
@@ -421,10 +421,10 @@ and rotater v d =
     rotatel v (-d)
   else
   let n = v.length in
-  let d = d mod n in
-  if d == 0 then
+  if d == 0 || n == 0 then
     copy v
   else begin
+    let d = d mod n in
     let r = create n false in
     unsafe_blit v.bits d r.bits 0 (n - d); (* shiftr *)
     unsafe_blit v.bits 0 r.bits (n - d) d; (* wraparound ls to ms *)

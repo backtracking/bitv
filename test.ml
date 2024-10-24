@@ -90,7 +90,12 @@ let () =
   let v = of_string "110101110" in
   assert (equal (rotatel v 1) (of_string "101011101"));
   assert (equal (rotatel v (-1)) (of_string "011010111"));
-  assert (equal (rotater v 1) (of_string "011010111"))
+  assert (equal (rotater v 1) (of_string "011010111"));
+  (* 0-length rotation *)
+  let v = create 0 false in
+  assert (length (rotatel v 0) = 0);
+  assert (length (rotater v 0) = 0);
+  ()
 
 let test_rotate n =
   let v = init n (fun _ -> Random.bool ()) in
