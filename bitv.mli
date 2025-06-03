@@ -181,29 +181,29 @@ val rotater : t -> int -> t
 (** {3 Bitwise in place operations.}
 
     This part of the API extends some bitwise operations by making them operate
-    in place, that is mutating a supplied bit vector rather than returning a
-    fresh one.
+    in place, that is mutating a destination bit vector supplied as a labeled
+    argument [dest], rather than returning a fresh one.
 
-    The binary operations support being called with [result] being one of the
+    These in place operations support being called with [dest] being one of the
     operands supplied to the function call.
 
-    For example [bw_and_in_place ~result:a a b] will store in [a] the result of
+    For example [bw_and_in_place ~dest:a a b] will store in [a] the result of
     the operation [bw_and a b]. *)
 
-val bw_and_in_place : result:t -> t -> t -> unit
-(** bitwise AND in place into [result];
+val bw_and_in_place : dest:t -> t -> t -> unit
+(** bitwise AND in place into [dest];
     raises [Invalid_argument] if the three vectors do not have the same length *)
 
-val bw_or_in_place  : result:t -> t -> t -> unit
-(** bitwise OR in place into [result];
+val bw_or_in_place  : dest:t -> t -> t -> unit
+(** bitwise OR in place into [dest];
     raises [Invalid_argument] if the three vectors do not have the same length *)
 
-val bw_xor_in_place : result:t -> t -> t -> unit
-(** bitwise XOR in place into [result];
+val bw_xor_in_place : dest:t -> t -> t -> unit
+(** bitwise XOR in place into [dest];
     raises [Invalid_argument] if the three vectors do not have the same length *)
 
-val bw_not_in_place : result:t -> t -> unit
-(** bitwise NOT in place into [result];
+val bw_not_in_place : dest:t -> t -> unit
+(** bitwise NOT in place into [dest];
     raises [Invalid_argument] if the two vectors do not have the same length *)
 
 (** {2 Test functions} *)
