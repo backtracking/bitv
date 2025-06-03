@@ -91,6 +91,20 @@ let init n f =
   for i = 0 to pred n do unsafe_set v i (f i) done;
   v
 
+let random n =
+  let v = create n false in
+  let b = v.bits in
+  let n = Bytes.length b in
+  for i = 0 to n / 3 do let j = 3 * i in
+    let bits = Random.bits () in
+    set_byte b j     (bits          land 0xFF);
+    set_byte b (j+1) ((bits lsr  8) land 0xFF);
+    set_byte b (j+2) ((bits lsr 16) land 0xFF)
+  done;
+  for i = 3 * (n / 3) to n - 1 do set_byte b i (Random.int 256) done;
+  normalize v;
+  v
+
 let fill v ofs len b =
   if ofs < 0 || len < 0 || ofs > v.length - len then invalid_arg "Bitv.fill";
   if len > 0 then (

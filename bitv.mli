@@ -33,6 +33,11 @@ val init : int -> (int -> bool) -> t
 (** [(Bitv.init n f)] returns a fresh vector of length [n],
     with bit number [i] initialized to the result of [(f i)]. *)
 
+val random: int -> t
+(** [Bitv.random n] returns a fresh vector of length [n] with random bits.
+    This is equivalent to [Bitv.init n (fun _ -> Random.bool ())],
+    but much faster. *)
+
 val set : t -> int -> bool -> unit
 (** [(Bitv.set v n b)] sets the [n]th bit of [v] to the value [b]. *)
 
