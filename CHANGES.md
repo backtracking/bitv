@@ -1,4 +1,5 @@
 
+  - fixed negative `max_length` on JavaScript platform
   - fixed division by zero in rotations of 0-length vectors
     (reported by Nikolaus Huber)
   - fixed integer overflows in bound tests in `fill`, `blit`, `sub`

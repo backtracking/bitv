@@ -36,7 +36,10 @@ let length v = v.length
 
 let[@inline] equal (v1: t) (v2: t) = v1 = v2
 
-let max_length = Sys.max_string_length * 8
+let max_length =
+  (* prevent overflow with 32-bit integers on JavaScript *)
+  if max_int lsr 3 < Sys.max_string_length then max_int else
+  Sys.max_string_length * 8
 
 let exceeds_max_length n =
   let s = n / 8 in
