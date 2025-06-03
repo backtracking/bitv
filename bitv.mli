@@ -194,7 +194,7 @@ val bw_and_in_place : dest:t -> t -> t -> unit
 (** bitwise AND in place into [dest];
     raises [Invalid_argument] if the three vectors do not have the same length *)
 
-val bw_or_in_place  : dest:t -> t -> t -> unit
+val bw_or_in_place : dest:t -> t -> t -> unit
 (** bitwise OR in place into [dest];
     raises [Invalid_argument] if the three vectors do not have the same length *)
 
