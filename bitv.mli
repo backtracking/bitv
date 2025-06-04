@@ -59,9 +59,8 @@ val tanimoto : t -> t -> float
     raises [Invalid_argument] if the two vectors do not have the same length *)
 
 val max_length : int
-(** @deprecated Use [exceeds_max_length] instead.
-    On a 32-bit platform (e.g. Javascript) the computation of [max_length]
-    may overflow and return a negative value. *)
+(** This is typically [Sys.max_string_length * 8] but may be smaller
+    on small platform (e.g. Javascript). *)
 
 val exceeds_max_length : int -> bool
 (** Returns true if the argument exceeds the maximum length of a bit vector
