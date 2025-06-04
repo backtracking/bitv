@@ -1,8 +1,8 @@
-# A bit vector library for OCaml.
+# A bit vector library for OCaml
 
 ## Installation
 
-Installation is available via opam by typing
+Installation is available via opam:
 
 ```
 opam install bitv
