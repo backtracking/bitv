@@ -33,6 +33,11 @@ val init : int -> (int -> bool) -> t
 (** [(Bitv.init n f)] returns a fresh vector of length [n],
     with bit number [i] initialized to the result of [(f i)]. *)
 
+val random: int -> t
+(** [Bitv.random n] returns a fresh vector of length [n] with random bits.
+    This is equivalent to [Bitv.init n (fun _ -> Random.bool ())],
+    but much faster. *)
+
 val set : t -> int -> bool -> unit
 (** [(Bitv.set v n b)] sets the [n]th bit of [v] to the value [b]. *)
 
@@ -176,6 +181,34 @@ val rotatel : t -> int -> t
 
 val rotater : t -> int -> t
 (** moves bits from most to least significant with wraparound *)
+
+(** {3 Bitwise in place operations.}
+
+    This part of the API extends some bitwise operations by making them operate
+    in place, that is mutating a destination bit vector supplied as a labeled
+    argument [dest], rather than returning a fresh one.
+
+    These in place operations support being called with [dest] being one of the
+    operands supplied to the function call.
+
+    For example [bw_and_in_place ~dest:a a b] will store in [a] the result of
+    the operation [bw_and a b]. *)
+
+val bw_and_in_place : dest:t -> t -> t -> unit
+(** bitwise AND in place into [dest];
+    raises [Invalid_argument] if the three vectors do not have the same length *)
+
+val bw_or_in_place : dest:t -> t -> t -> unit
+(** bitwise OR in place into [dest];
+    raises [Invalid_argument] if the three vectors do not have the same length *)
+
+val bw_xor_in_place : dest:t -> t -> t -> unit
+(** bitwise XOR in place into [dest];
+    raises [Invalid_argument] if the three vectors do not have the same length *)
+
+val bw_not_in_place : dest:t -> t -> unit
+(** bitwise NOT in place into [dest];
+    raises [Invalid_argument] if the two vectors do not have the same length *)
 
 (** {2 Test functions} *)
 
