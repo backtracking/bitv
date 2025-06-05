@@ -230,18 +230,18 @@ let pop v =
    However, one has to take care of normalizing the result of [bwnot]
    which introduces ones in highest significant positions. *)
 
-let[@inline always] bw_and_in_place_internal ~dest ~n b1 b2 =
+let[@inline always] bw_and_in_place_internal ~dst ~n b1 b2 =
   for i = 0 to n - 1 do
-    set_byte dest i ((byte b1 i) land (byte b2 i))
+    set_byte dst i ((byte b1 i) land (byte b2 i))
   done
 
-let bw_and_in_place ~dest v1 v2 =
+let bw_and_in_place ~dst v1 v2 =
   let l = v1.length in
-  if l <> v2.length || l <> dest.length then invalid_arg "Bitv.bw_and_in_place";
+  if l <> v2.length || l <> dst.length then invalid_arg "Bitv.bw_and_in_place";
   let b1 = v1.bits
   and b2 = v2.bits in
   let n = Bytes.length b1 in
-  bw_and_in_place_internal ~dest:dest.bits ~n b1 b2
+  bw_and_in_place_internal ~dst:dst.bits ~n b1 b2
 
 let bw_and v1 v2 =
   let l = v1.length in
@@ -250,21 +250,21 @@ let bw_and v1 v2 =
   and b2 = v2.bits in
   let n = Bytes.length b1 in
   let a = Bytes.make n (Char.chr 0) in
-  bw_and_in_place_internal ~dest:a ~n b1 b2;
+  bw_and_in_place_internal ~dst:a ~n b1 b2;
   { length = l; bits = a }
 
-let[@inline always] bw_or_in_place_internal ~dest ~n b1 b2 =
+let[@inline always] bw_or_in_place_internal ~dst ~n b1 b2 =
   for i = 0 to n - 1 do
-    set_byte dest i ((byte b1 i) lor (byte b2 i))
+    set_byte dst i ((byte b1 i) lor (byte b2 i))
   done
 
-let bw_or_in_place ~dest v1 v2 =
+let bw_or_in_place ~dst v1 v2 =
   let l = v1.length in
-  if l <> v2.length || l <> dest.length then invalid_arg "Bitv.bw_or_in_place";
+  if l <> v2.length || l <> dst.length then invalid_arg "Bitv.bw_or_in_place";
   let b1 = v1.bits
   and b2 = v2.bits in
   let n = Bytes.length b1 in
-  bw_or_in_place_internal ~dest:dest.bits ~n b1 b2
+  bw_or_in_place_internal ~dst:dst.bits ~n b1 b2
 
 let bw_or v1 v2 =
   let l = v1.length in
@@ -273,21 +273,21 @@ let bw_or v1 v2 =
   and b2 = v2.bits in
   let n = Bytes.length b1 in
   let a = Bytes.make n (Char.chr 0) in
-  bw_or_in_place_internal ~dest:a ~n b1 b2;
+  bw_or_in_place_internal ~dst:a ~n b1 b2;
   { length = l; bits = a }
 
-let[@inline always] bw_xor_in_place_internal ~dest ~n b1 b2 =
+let[@inline always] bw_xor_in_place_internal ~dst ~n b1 b2 =
   for i = 0 to n - 1 do
-    set_byte dest i ((byte b1 i) lxor (byte b2 i))
+    set_byte dst i ((byte b1 i) lxor (byte b2 i))
   done
 
-let bw_xor_in_place ~dest v1 v2 =
+let bw_xor_in_place ~dst v1 v2 =
   let l = v1.length in
-  if l <> v2.length || l <> dest.length then invalid_arg "Bitv.bw_xor_in_place";
+  if l <> v2.length || l <> dst.length then invalid_arg "Bitv.bw_xor_in_place";
   let b1 = v1.bits
   and b2 = v2.bits in
   let n = Bytes.length b1 in
-  bw_xor_in_place_internal ~dest:dest.bits ~n b1 b2
+  bw_xor_in_place_internal ~dst:dst.bits ~n b1 b2
 
 let bw_xor v1 v2 =
   let l = v1.length in
@@ -296,30 +296,30 @@ let bw_xor v1 v2 =
   and b2 = v2.bits in
   let n = Bytes.length b1 in
   let a = Bytes.make n (Char.chr 0) in
-  bw_xor_in_place_internal ~dest:a ~n b1 b2;
+  bw_xor_in_place_internal ~dst:a ~n b1 b2;
   { length = l; bits = a }
 
-let[@inline always] bw_not_in_place_internal ~dest ~n b =
-  let a = dest.bits in
+let[@inline always] bw_not_in_place_internal ~dst ~n b =
+  let a = dst.bits in
   for i = 0 to n - 1 do
     set_byte a i (255 land (lnot (byte b i)))
   done;
-  normalize dest
+  normalize dst
 
-let bw_not_in_place ~dest v =
+let bw_not_in_place ~dst v =
   let l = v.length in
-  if l <> dest.length then invalid_arg "Bitv.bw_not_in_place";
+  if l <> dst.length then invalid_arg "Bitv.bw_not_in_place";
   let b = v.bits in
   let n = Bytes.length b in
-  bw_not_in_place_internal ~dest ~n b
+  bw_not_in_place_internal ~dst ~n b
 
 let bw_not v =
   let b = v.bits in
   let n = Bytes.length b in
   let a = Bytes.make n (Char.chr 0) in
-  let dest = { length = v.length; bits = a } in
-  bw_not_in_place_internal ~dest ~n b;
-  dest
+  let dst = { length = v.length; bits = a } in
+  bw_not_in_place_internal ~dst ~n b;
+  dst
 
 (* Coercions to/from lists of integers *)
 

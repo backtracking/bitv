@@ -53,24 +53,24 @@ let ve = create 3 false
 let () =
   assert (to_string va = "0101010101");
   assert (to_string vb = "0100010001");
-  bw_and_in_place ~dest:vc va vb;
+  bw_and_in_place ~dst:vc va vb;
   assert (equal vc (bw_and va vb));
   assert (equal vc vb);
-  (try bw_and_in_place ~dest:ve va vb; assert false
+  (try bw_and_in_place ~dst:ve va vb; assert false
    with Invalid_argument msg -> assert (msg = "Bitv.bw_and_in_place"));
-  bw_or_in_place ~dest:vc va vb;
+  bw_or_in_place ~dst:vc va vb;
   assert (equal vc (bw_or va vb));
   assert (equal vc va);
-  (try bw_or_in_place ~dest:ve va vb; assert false
+  (try bw_or_in_place ~dst:ve va vb; assert false
    with Invalid_argument msg -> assert (msg = "Bitv.bw_or_in_place"));
-  bw_xor_in_place ~dest:vc va vb;
+  bw_xor_in_place ~dst:vc va vb;
   assert (equal vc (bw_xor va vb));
   assert (to_string vc = "0001000100");
-  (try bw_xor_in_place ~dest:ve va vb; assert false
+  (try bw_xor_in_place ~dst:ve va vb; assert false
    with Invalid_argument msg -> assert (msg = "Bitv.bw_xor_in_place"));
-  bw_not_in_place ~dest:vc va;
+  bw_not_in_place ~dst:vc va;
   assert (to_string vc = "1010101010");
-  (try bw_not_in_place ~dest:ve va; assert false
+  (try bw_not_in_place ~dst:ve va; assert false
    with Invalid_argument msg -> assert (msg = "Bitv.bw_not_in_place"));
   ()
 
@@ -265,9 +265,9 @@ let () = assert (equal (bw_and v ones) v)
 let () = assert (equal (bw_xor v zeros) v)
 let () = assert (equal (bw_xor v ones) (bw_not v))
 let () =
-  let dest = create 30 false in
-  bw_not_in_place ~dest v;
-  assert (equal (bw_xor v ones) dest)
+  let dst = create 30 false in
+  bw_not_in_place ~dst v;
+  assert (equal (bw_xor v ones) dst)
 
 (* fill overflow *)
 let () =
