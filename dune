@@ -24,4 +24,4 @@
  (name bench)
  (modules bench)
  (promote (until-clean))
- (libraries bitv))
+ (libraries unix bitv))

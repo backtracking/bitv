@@ -98,7 +98,7 @@ let random n =
   let v = create n false in
   let b = v.bits in
   let n = Bytes.length b in
-  for i = 0 to n / 3 do let j = 3 * i in
+  for i = 0 to n / 3 - 1 do let j = 3 * i in
     let bits = Random.bits () in
     set_byte b j     (bits          land 0xFF);
     set_byte b (j+1) ((bits lsr  8) land 0xFF);
@@ -217,6 +217,9 @@ let rec naive_pop x =
 
 let pop8 = Array.init 0x100 naive_pop
 let pop8 n = Array.unsafe_get pop8 n
+let pop16 n = pop8 (n land 0xFF) + pop8 (n lsr 8)
+let pop32 n = pop16 (n land 0xFFFF) + pop16 (n lsr 16)
+let popi32 n = pop32 (Int32.to_int n land 0xFFFF_FFFF)
 
 let pop v =
   let n = Bytes.length v.bits in
@@ -224,6 +227,21 @@ let pop v =
   let rec loop acc i =
     if i >= n then acc else loop (acc + pop8 (byte b i)) (i + 1) in
   loop 0 0
+
+(* not better *)
+let pop_fast v =
+  let b = v.bits in
+  let n = Bytes.length b in
+  let q = n lsr 2 in
+  let r = ref 0 in
+  for i = 0 to q - 1 do
+    let i = i lsl 2 in
+    r := !r + popi32 (Bytes.get_int32_ne b i)
+  done;
+  for i = q lsl 2 to n - 1 do
+    r := !r + pop8 (byte b i)
+  done;
+  !r
 
 (* Bitwise operations. It is straigthforward, since bitwise operations
    can be realized by the corresponding bitwise operations over integers.

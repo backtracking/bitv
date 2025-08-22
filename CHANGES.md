@@ -1,4 +1,5 @@
 
+  - fixed bug in `random`
   - fixed negative `max_length` on JavaScript platform
   - new function `random` (much faster than `init n (fun _ -> Random.bool ())`
   - new in-place bitwise operations (contribution by Mathieu Barbin)
