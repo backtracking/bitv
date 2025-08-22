@@ -1,4 +1,5 @@
 
+# 2.1 (22/08/2025)
   - fixed bug in `random`
   - fixed negative `max_length` on JavaScript platform
   - new function `random` (much faster than `init n (fun _ -> Random.bool ())`
