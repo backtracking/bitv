@@ -217,9 +217,6 @@ let rec naive_pop x =
 
 let pop8 = Array.init 0x100 naive_pop
 let pop8 n = Array.unsafe_get pop8 n
-let pop16 n = pop8 (n land 0xFF) + pop8 (n lsr 8)
-let pop32 n = pop16 (n land 0xFFFF) + pop16 (n lsr 16)
-let popi32 n = pop32 (Int32.to_int n land 0xFFFF_FFFF)
 
 let pop v =
   let n = Bytes.length v.bits in
@@ -229,6 +226,11 @@ let pop v =
   loop 0 0
 
 (* not better *)
+(*
+let pop16 n = pop8 (n land 0xFF) + pop8 (n lsr 8)
+let pop32 n = pop16 (n land 0xFFFF) + pop16 (n lsr 16)
+let popi32 n = pop32 (Int32.to_int n land 0xFFFF_FFFF)
+
 let pop_fast v =
   let b = v.bits in
   let n = Bytes.length b in
@@ -242,6 +244,7 @@ let pop_fast v =
     r := !r + pop8 (byte b i)
   done;
   !r
+*)
 
 (* Bitwise operations. It is straigthforward, since bitwise operations
    can be realized by the corresponding bitwise operations over integers.
