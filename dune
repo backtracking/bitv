@@ -2,7 +2,7 @@
  (public_name bitv)
  (flags
   (:standard -w -32))
- (modules bitv))
+ (modules bitv pbv))
 
 (library
  (public_name bitv.string)
@@ -13,6 +13,11 @@
 (test
  (name test)
  (modules test)
+ (libraries bitv))
+
+(test
+ (name test_pbv)
+ (modules test_pbv)
  (libraries bitv))
 
 (test
