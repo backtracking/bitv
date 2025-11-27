@@ -29,8 +29,10 @@ module type S = sig
   val make: int -> bool -> t
   val get: t -> int -> bool
   val set: t -> int -> bool -> t
-  val swap: t -> int -> t
 
+  (** Bit vector interface *)
+
+  val swap: t -> int -> t
   val bw_and: t -> t -> t
   val bw_or: t -> t -> t
   val bw_xor: t -> t -> t
@@ -43,8 +45,11 @@ module type S = sig
 
   val empty: int -> t
   val full: int -> t
+  val cardinal: t -> int (* same as pop *)
   val singleton: int -> int -> t
   val is_empty: t -> bool
+  val min_elt: t -> int
+  val max_elt: t -> int
   val add: t -> int -> t
   val remove: t -> int -> t
   val union: t -> t -> t
