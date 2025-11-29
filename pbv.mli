@@ -43,6 +43,7 @@ module type S = sig
   val pop: t -> int
   val ntz: t -> int
   val nlz: t -> int
+  val print: Format.formatter -> t -> unit
 
   (** Set interface *)
 

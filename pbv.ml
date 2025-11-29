@@ -29,6 +29,7 @@ module type S = sig
   val pop: t -> int
   val ntz: t -> int
   val nlz: t -> int
+  val print: Format.formatter -> t -> unit
 
   type size = int
   type elt = int
@@ -86,14 +87,86 @@ end
 module SetOps(X: sig
   type t
   val length: t -> int
+  val is_empty: t -> bool
   val pop: t -> int
+  val ntz: t -> int
+  val nlz: t -> int
   val get: t -> int -> bool
+  val set: t -> int -> bool -> t
+  val bw_and: t -> t -> t
+  val bw_or: t -> t -> t
+  val bw_xor: t -> t -> t
+  val bw_not: t -> t
 end) = struct
   let mem i v = X.get v i
   let cardinal = X.pop
   let find i s = if mem i s then i else raise Not_found
   let find_opt i s = if mem i s then Some i else None
+  let union = X.bw_or
+  let inter = X.bw_and
+  let diff v1 v2 = X.bw_and v1 (X.bw_not v2)
+  let subset v1 v2 = X.is_empty (X.bw_and v1 (X.bw_not v2))
+  let disjoint v1 v2 = X.is_empty (X.bw_and v1 v2)
+  let min_elt v =
+    if X.is_empty v then invalid_arg "min_elt";
+    X.ntz v
+  let min_elt_opt v =
+    if X.is_empty v then None else Some (X.ntz v)
+  let max_elt v =
+    if X.is_empty v then invalid_arg "min_elt";
+    X.length v - 1 - X.nlz v
+  let max_elt_opt v =
+    if X.is_empty v then None else Some (Sys.int_size - 1 - X.nlz v)
+  let check_index s v i =
+    if i < 0 || i >= X.length v then invalid_arg s
+  let add i v =
+    check_index "add" v i;
+    X.set v i true
+  let remove i v =
+    check_index "remove" v i;
+    X.set v i false
+  let print fmt v =
+    for i = X.length v - 1 downto 0 do
+      Format.fprintf fmt "%c" (if X.get v i then '1' else '0')
+    done
 end
+
+let rec naive_pop x =
+  assert (x < 0x10000);
+  if x = 0 then 0 else 1 + naive_pop (x - (x land -x))
+let pop16 = Array.init 0x10000 naive_pop
+let pop16 x = Array.unsafe_get pop16 x
+let pop32 x = pop16 (x land 0xffff) + pop16 ((x lsr 16) land 0xffff)
+let pop64 x = pop16 (x land 0xffff) + pop16 ((x lsr 16) land 0xffff)
+            + pop16 ((x lsr 32) land 0xffff) + pop16 ((x lsr 48) land 0xffff)
+let pop =
+  match Sys.word_size with 32 -> pop32 | 64 -> pop64 | _ -> assert false
+
+(* inverse of `1 lsl i` i.e. tib i = log_2(i) *)
+let log2 = Array.make 255 0
+let () = for i = 0 to 7 do log2.(1 lsl i) <- i done
+
+(* assumption: x is a power of 2 *)
+let tib32 x =
+  if x land 0xFFFF == 0 then
+    let x = x lsr 16 in
+    if x land 0xFF == 0 then 24 + log2.(x lsr 8) else 16 + log2.(x)
+  else
+    if x land 0xFF == 0 then 8 + log2.(x lsr 8) else log2.(x)
+
+let ffffffff = (0xffff lsl 16) lor 0xffff
+let tib64 x =
+  if x land ffffffff == 0 then 32 + tib32 (x lsr 32) else tib32 x
+let tib =
+  match Sys.word_size with 32 -> tib32 | 64 -> tib64 | _ -> assert false
+
+let compute_ntz size x =
+  if x = 0 then size else tib (x land (-x))
+
+let compute_nlz size x =
+  if x == 0 then size else
+  let rec loop i = if x land i != 0 then size - 1 - tib i else loop (i lsr 1) in
+  loop (1 lsl (size - 1))
 
 module Native = struct
 
@@ -132,14 +205,6 @@ module Native = struct
     check_index "set" v i;
     unsafe_set v i b
 
-  let add i v =
-    check_index "add" v i;
-    set v i true
-
-  let remove i v =
-    check_index "remove" v i;
-    set v i false
-
   let swap v i =
     check_index "swap" v i;
     v lxor (1 lsl i)
@@ -149,77 +214,37 @@ module Native = struct
   let bw_xor = (lxor)
   let bw_not = (lnot)
 
-  let rec naive_pop x =
-    assert (x < 0x10000);
-    if x = 0 then 0 else 1 + naive_pop (x - (x land -x))
-  let pop16 = Array.init 0x10000 naive_pop
-  let pop16 x = Array.unsafe_get pop16 x
-  let pop32 x = pop16 (x land 0xffff) + pop16 ((x lsr 16) land 0xffff)
-  let pop64 x = pop16 (x land 0xffff) + pop16 ((x lsr 16) land 0xffff)
-              + pop16 ((x lsr 32) land 0xffff) + pop16 ((x lsr 48) land 0xffff)
-  let pop =
-    match Sys.word_size with 32 -> pop32 | 64 -> pop64 | _ -> assert false
+  let ntz v = compute_ntz max_length v
+  let nlz v = compute_nlz max_length v
+  let pop = pop
 
-  (* inverse of `1 lsl i` i.e. tib i = log_2(i) *)
-  let log2 = Array.make 255 0
-  let () = for i = 0 to 7 do log2.(1 lsl i) <- i done
-
-  (* assumption: x is a power of 2 *)
-  let tib32 x =
-    if x land 0xFFFF == 0 then
-      let x = x lsr 16 in
-      if x land 0xFF == 0 then 24 + log2.(x lsr 8) else 16 + log2.(x)
-    else
-      if x land 0xFF == 0 then 8 + log2.(x lsr 8) else log2.(x)
-
-  let ffffffff = (0xffff lsl 16) lor 0xffff
-  let tib64 x =
-    if x land ffffffff == 0 then 32 + tib32 (x lsr 32) else tib32 x
-  let tib =
-    match Sys.word_size with 32 -> tib32 | 64 -> tib64 | _ -> assert false
-
-  let ntz v =
-    if v == 0 then invalid_arg "ntz";
-    tib (v land (-v))
-
-  let nlz v =
-    if v == 0 then invalid_arg "nlz";
-    let rec loop i =
-      if v land i != 0 then Sys.int_size - 1 - tib i else loop (i lsr 1) in
-    loop min_int
-
-  let empty _n = 0
-  let full _n = -1
+  let empty _n =
+    0
+  let full _n =
+    -1
   let singleton len i =
     if i < 0 || i >= len then invalid_arg "singleton";
     1 lsl i
-  let is_empty v = v == 0
-  let min_elt v =
-    if is_empty v then invalid_arg "min_elt";
-    ntz v
-  let min_elt_opt v =
-    if is_empty v then None else Some (ntz v)
-  let max_elt v =
-    if is_empty v then invalid_arg "min_elt";
-    Sys.int_size - 1 - nlz v
-  let max_elt_opt v =
-    if is_empty v then None else Some (Sys.int_size - 1 - nlz v)
+  let is_empty v =
+    v == 0
 
   include SetOps(struct
     type t_ = t type t = t_
     let length = length
+    let is_empty = is_empty
     let pop = pop
+    let ntz = ntz
+    let nlz = nlz
     let get = get
+    let set = set
+    let bw_or = bw_or
+    let bw_and = bw_and
+    let bw_xor = bw_xor
+    let bw_not = bw_not
   end)
 
   let choose = min_elt
   let choose_opt = min_elt_opt
-
-  let union = bw_or
-  let inter = bw_and
-  let diff v1 v2 = v1 land (lnot v2)
-  let subset v1 v2 = v1 land (lnot v2) == 0
-  let disjoint v1 v2 = v1 land v2 == 0
 
   let find_first p v =
     let rec loop v =
@@ -332,7 +357,10 @@ end
 
 module Large : S = struct
 
-  (* leaf
+  (* rope-like data structure, with leaves for BV of size <= 32 and binary
+     nodes otherwise
+
+     leaf
          62     56     50     44     38     32 31                           0
          +-+------+------+------+------+------+------------------------------+
          |?|  ??  | nlz  | ntz  | pop  | size |            bits              |
@@ -343,29 +371,52 @@ module Large : S = struct
          |?|             ntz                  |            size              |
          +-+----------------------------------+------------------------------+
   *)
+  type t =
+    | Leaf of int
+    | Node of { info: int; high: t; low: t }
 
+  let bits x = x land 0xFFFF_FFFF
   let ilen x = (x lsr 32) land 0x3F
   let ipop x = (x lsr 38) land 0x3F
   let intz x = (x lsr 44) land 0x3F
   let inlz x = (x lsr 50) land 0x3F
   let imk ~nlz ~ntz ~pop ~size bits =
     assert (bits < 0x1_0000_0000);
+    assert (bits lsr size = 0);
     (nlz lsl 50) lor (ntz lsl 44) lor (pop lsl 38) lor (size lsl 32) lor bits
+  let ibits size bits =
+    imk ~nlz:(compute_nlz size bits) ~ntz:(compute_ntz size bits)
+        ~pop:(pop bits) ~size bits
+  let iget x i =
+    (x lsr i) land 1 <> 0
+  let iswap x i =
+    let b = iget x i in
+    let bits = bits x in
+    let bits = if b then bits land (lnot (1 lsl i)) else bits lor (1 lsl i) in
+    let pop = if b then ipop x - 1 else ipop x + 1 in
+    let size = ilen x in
+    let nlz = compute_nlz size bits in
+    let ntz = compute_ntz size bits in
+    imk ~nlz ~ntz ~pop ~size bits
+  let ibw_and x y =
+    let size = ilen x in assert (ilen y = size); ibits size (bits x land bits y)
+  let ibw_or x y =
+    let size = ilen x in assert (ilen y = size); ibits size (bits x lor  bits y)
+  let ibw_xor x y =
+    let size = ilen x in assert (ilen y = size); ibits size (bits x lxor bits y)
+  let ibw_not x =
+    let size = ilen x in ibits size ((lnot (bits x)) land (1 lsl size - 1))
 
-  let izeros size =
-    assert (size <= 32);
-    imk ~nlz:size ~ntz:size ~pop:0 ~size 0
-  let iones size =
-    assert (size <= 32);
-    imk ~nlz:0 ~ntz:0 ~pop:size ~size 0xFFFF_FFFF
-  let imake size b = if b then iones size else izeros size
+  (* pre-allocated 0 and 1 leaves *)
+  let izeros =
+    Array.init 33 (fun size -> Leaf (imk ~nlz:size ~ntz:size ~pop:0 ~size 0))
+  let iones =
+    Array.init 33 (fun size -> Leaf (imk ~nlz:0 ~ntz:0 ~pop:size ~size (1 lsl size - 1)))
+  let imake size b =
+    if b then iones.(size) else izeros.(size)
 
   let nlen i = i land 0x7FFF_FFFF
   let nntz i = i lsr 31
-
-  type t =
-    | Leaf of int
-    | Node of { info: int; high: t; low: t }
 
   let length = function
     | Leaf x        -> ilen x
@@ -377,7 +428,7 @@ module Large : S = struct
 
   let max_length = 1 lsl 31 - 1
 
-  let node ~low ~high =
+  let node ~high ~low =
     let lenl = length low and lenh = length high in
     let len = lenl + lenh in
     if len > max_length then invalid_arg "max length exceeded";
@@ -389,23 +440,31 @@ module Large : S = struct
   type elt = int
   type size = int
 
-  (* both size and size+1 *)
-  let make2 size _b =
-    if size < 32 then assert false (*TODO*) else assert false (*TODO*)
+  (* returns both size and size+1 *)
+  let rec make2 size b =
+    if size < 32 then imake size b, imake (size+1) b else
+    if size = 32 then imake 32 b, node ~high:(imake 1 b) ~low:(imake 32 b) else
+    let vn, vn1 = make2 (size / 2) b in
+    if size mod 2 = 0 then node ~high:vn ~low:vn , node ~high:vn  ~low:vn1
+                      else node ~high:vn ~low:vn1, node ~high:vn1 ~low:vn1
 
   let make size b =
-    if size <= 32 then Leaf (imake size b) else
     let v, _ = make2 size b in v
 
   let rec unsafe_get v i = match v with
     | Leaf x ->
-        (x lsr i) land 1 <> 0
+        iget x i
     | Node {high; low; _} ->
         let ll = length low in
         if i < ll then unsafe_get low i else unsafe_get high (i - ll)
 
-  let unsafe_set _v _i _b =
-    assert false (*TODO*)
+  let rec unsafe_set v i b = match v with
+    | Leaf x ->
+        if iget x i = b then v else Leaf (iswap x i)
+    | Node { high; low; _ } ->
+        let ll = length low in
+        if i < ll then node ~high ~low:(unsafe_set low i b)
+                  else node ~high:(unsafe_set high (i-ll) b) ~low
 
   let check_index s v i =
     if i < 0 || i >= length v then invalid_arg s
@@ -425,19 +484,24 @@ module Large : S = struct
     | Leaf x -> ipop x
     | Node { high; low; _ } -> pop high + pop low
 
-  include SetOps(struct
-    type t_ = t type t = t_
-    let length = length
-    let pop = pop
-    let get = get
-  end)
+  let check_same_size s v1 v2 =
+    if length v1 <> length v2 then invalid_arg s
 
-  let swap: t -> int -> t = fun _ -> assert false (*TODO*)
+  let rec bw_op iop v1 v2 = match v1, v2 with
+    | Leaf x1, Leaf x2 -> Leaf (iop x1 x2)
+    | Node {high=h1;low=l1;_}, Node {high=h2;low=l2;_} ->
+        node ~high:(bw_op iop h1 h2) ~low:(bw_op iop l1 l2)
+    | _ -> assert false
+  let bw_and v1 v2 =  check_same_size "bw_and" v1 v2; bw_op ibw_and v1 v2
+  let bw_or  v1 v2 =  check_same_size "bw_or"  v1 v2; bw_op ibw_or  v1 v2
+  let bw_xor v1 v2 =  check_same_size "bw_xor" v1 v2; bw_op ibw_xor v1 v2
+  let rec bw_not = function
+    | Leaf x -> Leaf (ibw_not x)
+    | Node {high;low;_} -> node ~high:(bw_not high) ~low:(bw_not low)
 
-  let bw_and: t -> t -> t = fun _ -> assert false (*TODO*)
-  let bw_or: t -> t -> t = fun _ -> assert false (*TODO*)
-  let bw_xor: t -> t -> t = fun _ -> assert false (*TODO*)
-  let bw_not: t -> t = fun _ -> assert false (*TODO*)
+  let swap v i = match v with
+    | Leaf x -> Leaf (iswap x i)
+    | Node _ -> assert false (*TODO*)
 
   let rec nlz = function
     | Leaf x -> inlz x
@@ -445,21 +509,25 @@ module Large : S = struct
         let nlzh = nlz high in
         if nlzh < length high then nlzh else nlzh + nlz low
 
+  include SetOps(struct
+    type t_ = t type t = t_
+    let length = length
+    let is_empty = is_empty
+    let pop = pop
+    let ntz = ntz
+    let nlz = nlz
+    let get = get
+    let set = set
+    let bw_or = bw_or
+    let bw_and = bw_and
+    let bw_xor = bw_xor
+    let bw_not = bw_not
+  end)
+
   let empty: size -> t = fun _ -> assert false (*TODO*)
   let full: size -> t = fun _ -> assert false (*TODO*)
   let mem: elt -> t -> bool = fun _ -> assert false (*TODO*)
-  let singleton: size -> elt -> t = fun _ -> assert false (*TODO*)
-  let min_elt: t -> elt = fun _ -> assert false (*TODO*)
-  let min_elt_opt: t -> elt option = fun _ -> assert false (*TODO*)
-  let max_elt: t -> elt = fun _ -> assert false (*TODO*)
-  let max_elt_opt: t -> elt option = fun _ -> assert false (*TODO*)
-  let add: elt -> t -> t = fun _ -> assert false (*TODO*)
-  let remove: elt -> t -> t = fun _ -> assert false (*TODO*)
-  let union: t -> t -> t = fun _ -> assert false (*TODO*)
-  let inter: t -> t -> t = fun _ -> assert false (*TODO*)
-  let diff: t -> t -> t = fun _ -> assert false (*TODO*)
-  let subset: t -> t -> bool = fun _ -> assert false (*TODO*)
-  let disjoint: t -> t -> bool = fun _ -> assert false (*TODO*)
+  let singleton size i = set (make size false) i true
   let iter: (elt -> unit) -> t -> unit = fun _ -> assert false (*TODO*)
   let map: (elt -> elt) -> t -> t = fun _ -> assert false (*TODO*)
   let fold: (elt -> 'a -> 'a) -> t -> 'a -> 'a = fun _ -> assert false (*TODO*)
@@ -486,9 +554,9 @@ module Large : S = struct
   let of_seq : elt Seq.t -> t = fun _ -> assert false (*TODO*)
   let print_set: Format.formatter -> t -> unit = fun _ -> assert false (*TODO*)
 
-  let compare: t -> t -> int = fun _ -> assert false (*TODO*)
-  let equal: t -> t -> bool = fun _ -> assert false (*TODO*)
-  let hash: t -> int = fun _ -> assert false (*TODO*)
+  let compare: t -> t -> int = Stdlib.compare
+  let equal: t -> t -> bool = (=)
+  let hash: t -> int = Hashtbl.hash
 
 end
 
