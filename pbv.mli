@@ -29,9 +29,9 @@ module type S = sig
   val max_length: int
   val length: t -> int
   val make: int -> bool -> t
+  val init: int -> (int -> bool) -> t
   val get: t -> int -> bool
   val set: t -> int -> bool -> t
-  (* TODO: init, iter, print, fill, blit, sub, append *)
 
   (** Bit vector interface *)
 

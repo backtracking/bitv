@@ -105,9 +105,7 @@ let test (module X: S) (size: int) =
         loop v (n + 2)
       else
         loop v (n + 2) in
-    let v = X.make (limit + 1) true in
-    let v = X.unsafe_set v 0 false in
-    let v = X.unsafe_set v 1 false in
+    let v = X.init (limit + 1) (fun i -> i >= 2 && (i = 2 || i mod 2 = 1)) in
     loop v 3
   in
   if size >= 101 then assert (X.pop (sieve 100) = 25);
@@ -116,6 +114,7 @@ let test (module X: S) (size: int) =
 
 let () = test (module Native) Sys.int_size
 let () = test (module Large) 31
-(* let () = test (module Large) 32 *)
-(* let () = test (module Large) Sys.int_size *)
-(* let () = test (module Large) 200 *)
+let () = test (module Large) 32
+let () = test (module Large) Sys.int_size
+let () = test (module Large) 200
+let () = test (module Large) 1100

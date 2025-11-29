@@ -18,6 +18,7 @@ module type S = sig
   val max_length: int
   val length: t -> int
   val make: int -> bool -> t
+  val init: int -> (int -> bool) -> t
   val get: t -> int -> bool
   val set: t -> int -> bool -> t
   val swap: t -> int -> t
@@ -187,6 +188,11 @@ module Native = struct
 
   let make _n b =
     if b then -1 else 0
+
+  let init _n f =
+    let rec build v i = if i < 0 then v else
+      let v = if f i then (v lsl 1) lor 1 else v lsl 1 in build v (i-1) in
+    build 0 (Sys.int_size - 1)
 
   let unsafe_get v i =
     (v lsr i) land 1 <> 0
@@ -406,6 +412,10 @@ module Large : S = struct
     let size = ilen x in assert (ilen y = size); ibits size (bits x lxor bits y)
   let ibw_not x =
     let size = ilen x in ibits size ((lnot (bits x)) land (1 lsl size - 1))
+  let iinit size f =
+    let rec build v i = if i < 0 then ibits size v else
+      let v = if f i then (v lsl 1) lor 1 else v lsl 1 in build v (i-1) in
+    build 0 (size - 1)
 
   (* pre-allocated 0 and 1 leaves *)
   let izeros =
@@ -450,6 +460,12 @@ module Large : S = struct
 
   let make size b =
     let v, _ = make2 size b in v
+
+  let rec init size f =
+    if size <= 32 then Leaf (iinit size f) else
+    let lh = size / 2 in
+    let ll = size - lh in
+    node ~high:(init lh (fun i -> f (ll + i))) ~low:(init ll f)
 
   let rec unsafe_get v i = match v with
     | Leaf x ->
@@ -499,9 +515,12 @@ module Large : S = struct
     | Leaf x -> Leaf (ibw_not x)
     | Node {high;low;_} -> node ~high:(bw_not high) ~low:(bw_not low)
 
-  let swap v i = match v with
+  let rec swap v i = match v with
     | Leaf x -> Leaf (iswap x i)
-    | Node _ -> assert false (*TODO*)
+    | Node  { high; low; _ } ->
+        let ll = length low in
+        if i < ll then node ~high ~low:(swap low i)
+                  else node ~high:(swap high (i-ll)) ~low
 
   let rec nlz = function
     | Leaf x -> inlz x
