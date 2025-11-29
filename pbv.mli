@@ -32,6 +32,8 @@ module type S = sig
   val init: int -> (int -> bool) -> t
   val get: t -> int -> bool
   val set: t -> int -> bool -> t
+  val iteri: (int -> bool -> unit) -> t -> unit
+  (* TODO: fill, blit, sub, append *)
 
   (** Bit vector interface *)
 
@@ -44,9 +46,25 @@ module type S = sig
   val ntz: t -> int
   val nlz: t -> int
   val print: Format.formatter -> t -> unit
+   (** prints a bit vectors using 0s and 1s, from most significant bits
+       to least significant bits *)
 
-  (** Set interface *)
+  val compare: t -> t -> int
+  val equal: t -> t -> bool
+  val hash: t -> int
 
+  val unsafe_get: t -> int -> bool
+  val unsafe_set: t -> int -> bool -> t
+
+  (** Set interface
+
+  The following functions interpret a bit vector as the characteristic
+  predicate of a set, i.e. the elements of the set are the indices at
+  which the bit vector is true.
+
+  The iteration functions below are only iterating over the elements
+  of the set, i.e. over the 1 bits of the bit vector, and not over all
+  the bits.  *)
   type size = int
   type elt = int
   val empty: size -> t
@@ -66,9 +84,8 @@ module type S = sig
   val diff: t -> t -> t
   val subset: t -> t -> bool
   val disjoint: t -> t -> bool
-  val iter: (elt -> unit) -> t -> unit
-  val map: (elt -> elt) -> t -> t
-  val fold: (elt -> 'a -> 'a) -> t -> 'a -> 'a
+  val iteri_true: (elt -> unit) -> t -> unit
+  val foldi_true: (elt -> 'a -> 'a) -> t -> 'a -> 'a
   val for_all: (elt -> bool) -> t -> bool
   val exists: (elt -> bool) -> t -> bool
   val filter: (elt -> bool) -> t -> t
@@ -85,20 +102,14 @@ module type S = sig
   val find_last: (elt -> bool) -> t -> elt
   val find_last_opt: (elt -> bool) -> t -> elt option
   val of_list: elt list -> t
-  val to_seq_from : elt -> t -> elt Seq.t
-  val to_seq : t -> elt Seq.t
-  val to_rev_seq : t -> elt Seq.t
-  val add_seq : elt Seq.t -> t -> t
-  val of_seq : elt Seq.t -> t
+  val to_seq_from: elt -> t -> elt Seq.t
+  val to_seq: t -> elt Seq.t
+  val to_rev_seq: t -> elt Seq.t
+  val add_seq: elt Seq.t -> t -> t
+  val of_seq: elt Seq.t -> t
   val print_set: Format.formatter -> t -> unit
+    (** prints a bit vector as a set, using notation [{x1,x2,...,xn}]. *)
   (* TODO iter_subsets *)
-
-  val compare: t -> t -> int
-  val equal: t -> t -> bool
-  val hash: t -> int
-
-  val unsafe_get: t -> int -> bool
-  val unsafe_set: t -> int -> bool -> t
 end
 
 module Native : S

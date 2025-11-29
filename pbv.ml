@@ -21,8 +21,9 @@ module type S = sig
   val init: int -> (int -> bool) -> t
   val get: t -> int -> bool
   val set: t -> int -> bool -> t
-  val swap: t -> int -> t
+  val iteri: (int -> bool -> unit) -> t -> unit
 
+  val swap: t -> int -> t
   val bw_and: t -> t -> t
   val bw_or: t -> t -> t
   val bw_xor: t -> t -> t
@@ -31,6 +32,13 @@ module type S = sig
   val ntz: t -> int
   val nlz: t -> int
   val print: Format.formatter -> t -> unit
+
+  val compare: t -> t -> int
+  val equal: t -> t -> bool
+  val hash: t -> int
+
+  val unsafe_get: t -> int -> bool
+  val unsafe_set: t -> int -> bool -> t
 
   type size = int
   type elt = int
@@ -51,9 +59,8 @@ module type S = sig
   val diff: t -> t -> t
   val subset: t -> t -> bool
   val disjoint: t -> t -> bool
-  val iter: (elt -> unit) -> t -> unit
-  val map: (elt -> elt) -> t -> t
-  val fold: (elt -> 'a -> 'a) -> t -> 'a -> 'a
+  val iteri_true: (elt -> unit) -> t -> unit
+  val foldi_true: (elt -> 'a -> 'a) -> t -> 'a -> 'a
   val for_all: (elt -> bool) -> t -> bool
   val exists: (elt -> bool) -> t -> bool
   val filter: (elt -> bool) -> t -> t
@@ -76,29 +83,28 @@ module type S = sig
   val add_seq : elt Seq.t -> t -> t
   val of_seq : elt Seq.t -> t
   val print_set: Format.formatter -> t -> unit
-
-  val compare: t -> t -> int
-  val equal: t -> t -> bool
-  val hash: t -> int
-
-  val unsafe_get: t -> int -> bool
-  val unsafe_set: t -> int -> bool -> t
 end
 
 module SetOps(X: sig
   type t
+  val make: int -> bool -> t
   val length: t -> int
   val is_empty: t -> bool
   val pop: t -> int
   val ntz: t -> int
   val nlz: t -> int
   val get: t -> int -> bool
+  val unsafe_get: t -> int -> bool
   val set: t -> int -> bool -> t
+  val unsafe_set: t -> int -> bool -> t
   val bw_and: t -> t -> t
   val bw_or: t -> t -> t
   val bw_xor: t -> t -> t
   val bw_not: t -> t
+  val elements: t -> int list
 end) = struct
+  let empty size = X.make size false
+  let full size = X.make size true
   let mem i v = X.get v i
   let cardinal = X.pop
   let find i s = if mem i s then i else raise Not_found
@@ -118,6 +124,8 @@ end) = struct
     X.length v - 1 - X.nlz v
   let max_elt_opt v =
     if X.is_empty v then None else Some (Sys.int_size - 1 - X.nlz v)
+  let choose = min_elt
+  let choose_opt = min_elt_opt
   let check_index s v i =
     if i < 0 || i >= X.length v then invalid_arg s
   let add i v =
@@ -130,6 +138,101 @@ end) = struct
     for i = X.length v - 1 downto 0 do
       Format.fprintf fmt "%c" (if X.get v i then '1' else '0')
     done
+
+  let find_first p v =
+    let rec loop v =
+      if X.is_empty v then raise Not_found;
+      let x = min_elt v in
+      if p x then x else loop (X.unsafe_set v x false) in
+    loop v
+
+  let find_first_opt p v =
+    try Some (find_first p v) with Not_found -> None
+
+  let find_last p v =
+    let rec loop v =
+      if X.is_empty v then raise Not_found;
+      let x = max_elt v in
+      if p x then x else loop (X.unsafe_set v x false) in
+    loop v
+
+  let find_last_opt p v =
+    try Some (find_last p v) with Not_found -> None
+
+  let rec for_all p v =
+    X.is_empty v ||
+    let x = min_elt v in p x && for_all p (X.unsafe_set v x false)
+
+  let rec exists p v =
+    not (X.is_empty v) &&
+    let x = min_elt v in p x || exists p (X.unsafe_set v x false)
+
+  let rec filter p v =
+    if X.is_empty v then
+      empty (X.length v)
+    else
+      let x = min_elt v in
+      let v = filter p (X.unsafe_set v x false) in
+      if p x then add x v else v
+
+  let rec filter_map f v =
+    if X.is_empty v then
+      empty (X.length v)
+    else
+      let x = min_elt v in
+      let v = filter_map f (X.unsafe_set v x false) in
+      match f x with
+      | None -> v
+      | Some x -> add x v
+
+  let rec partition p v =
+     if X.is_empty v then
+       let v = empty (X.length v) in v, v
+    else
+      let x = min_elt v in
+      let vt,vf = partition p (X.unsafe_set v x false) in
+      if p x then add x vt, vf else vt, add x vf
+
+  let split x v =
+    filter (fun y -> y < x) v, X.get v x, filter (fun y -> y > x) v
+
+  let print_set fmt v =
+    let rec pr = function
+      | [] -> ()
+      | x :: l ->
+          Format.fprintf fmt "%d" x; if l <> [] then Format.fprintf fmt ",@,";
+          pr l
+    in
+    Format.fprintf fmt "{";
+    pr (X.elements v);
+    Format.fprintf fmt "}"
+
+  let of_list l =
+    List.fold_left (fun s x -> add x s) (empty (List.length l)) l
+
+  let of_seq s =
+    Seq.fold_left (fun v x -> add x v) (empty (Seq.length s)) s
+
+  let rec to_seq_from x v =
+    if x > max_elt v then Seq.empty
+    else if mem x v then fun () -> Seq.Cons (x, to_seq_from (x + 1) v)
+    else to_seq_from (x + 1) v
+
+  let to_seq v =
+    if X.is_empty v then Seq.empty else to_seq_from (min_elt v) v
+
+  let rec to_rev_seq_from x v =
+    if x < min_elt v then Seq.empty
+    else if mem x v then fun () -> Seq.Cons (x, to_rev_seq_from (x - 1) v)
+    else to_rev_seq_from (x - 1) v
+
+  let to_rev_seq v =
+    if X.is_empty v then Seq.empty else to_rev_seq_from (max_elt v) v
+
+  let rec add_seq veq v = match veq () with
+    | Seq.Nil -> v
+    | Seq.Cons (x, veq) -> add_seq veq (add x v)
+
 end
 
 let rec naive_pop x =
@@ -211,6 +314,11 @@ module Native = struct
     check_index "set" v i;
     unsafe_set v i b
 
+  let iteri f v =
+    let n = length v in
+    let rec loop i = if i < n then (f i (unsafe_get v i); loop (i+1)) in
+    loop 0
+
   let swap v i =
     check_index "swap" v i;
     v lxor (1 lsl i)
@@ -224,33 +332,33 @@ module Native = struct
   let nlz v = compute_nlz max_length v
   let pop = pop
 
-  let empty _n =
-    0
-  let full _n =
-    -1
   let singleton len i =
     if i < 0 || i >= len then invalid_arg "singleton";
     1 lsl i
   let is_empty v =
     v == 0
 
+  let rec elements v =
+    if v == 0 then [] else let i = v land (-v) in tib i :: elements (v - i)
+
   include SetOps(struct
     type t_ = t type t = t_
+    let make = make
     let length = length
     let is_empty = is_empty
     let pop = pop
     let ntz = ntz
     let nlz = nlz
     let get = get
+    let unsafe_get = unsafe_get
     let set = set
+    let unsafe_set = unsafe_set
     let bw_or = bw_or
     let bw_and = bw_and
     let bw_xor = bw_xor
     let bw_not = bw_not
+    let elements = elements
   end)
-
-  let choose = min_elt
-  let choose_opt = min_elt_opt
 
   let find_first p v =
     let rec loop v =
@@ -274,14 +382,17 @@ module Native = struct
   let find_last_opt p v =
     try Some (find_last p v) with Not_found -> None
 
-  let rec elements v =
-    if v == 0 then [] else let i = v land (-v) in tib i :: elements (v - i)
+  let rec iteri_true f v =
+    if v != 0 then let i = v land (-v) in f (tib i); iteri_true f (v - i)
+  let rec iteri_true_ofs f ofs v =
+    if v != 0 then
+      let i = v land (-v) in f (ofs + tib i); iteri_true_ofs f ofs (v - i)
 
-  let rec iter f v =
-    if v != 0 then let i = v land (-v) in f (tib i); iter f (v - i)
-
-  let rec fold f v acc =
-    if v == 0 then acc else let i = v land (-v) in fold f (v - i) (f (tib i) acc)
+  let rec foldi_true f v acc =
+    if v == 0 then acc else let i = v land (-v) in foldi_true f (v - i) (f (tib i) acc)
+  let rec foldi_true_ofs f ofs v acc =
+    if v == 0 then acc else
+    let i = v land (-v) in foldi_true_ofs f ofs (v - i) (f (ofs + tib i) acc)
 
   let rec for_all p v =
     v == 0 || let i = v land (-v) in p (tib i) && for_all p (v - i)
@@ -318,20 +429,6 @@ module Native = struct
   let split i v =
     let bi = 1 lsl i in
     v land (bi - 1), v land bi != 0, v land (-1 lsl (i+1))
-
-  let print_set fmt v =
-    let rec pr = function
-      | [] -> ()
-      | x :: l ->
-          Format.fprintf fmt "%d" x; if l <> [] then Format.fprintf fmt ",@,";
-          pr l
-    in
-    Format.fprintf fmt "{";
-    pr (elements v);
-    Format.fprintf fmt "}"
-
-  let map f v =
-    fold (fun x v -> add (f x) v) v 0(*(empty (length v))*)
 
   let of_list =
     List.fold_left (fun s x -> add x s) 0(*(empty (List.length l))*)
@@ -380,6 +477,10 @@ module Large : S = struct
   type t =
     | Leaf of int
     | Node of { info: int; high: t; low: t }
+
+  let compare: t -> t -> int = Stdlib.compare
+  let equal: t -> t -> bool = (=)
+  let hash: t -> int = Hashtbl.hash
 
   let bits x = x land 0xFFFF_FFFF
   let ilen x = (x lsr 32) land 0x3F
@@ -528,54 +629,68 @@ module Large : S = struct
         let nlzh = nlz high in
         if nlzh < length high then nlzh else nlzh + nlz low
 
+  (* FIXME: improve *)
+  let iteri f v =
+    let n = length v in
+    let rec loop i = if i < n then (f i (unsafe_get v i); loop (i+1)) in
+    loop 0
+
+  let elements v =
+    let rec elements acc ofs = function
+      | Leaf x ->
+          let rec loop acc x =
+            if x == 0 then acc else
+            let i = x land (-x) in loop (ofs + tib i :: acc) (x - i) in
+          loop acc (bits x)
+      | Node {high;low;_} ->
+          let ll = length low in
+          elements (elements acc ofs low) (ll + ofs) high
+    in
+    elements [] 0 v
+
   include SetOps(struct
     type t_ = t type t = t_
+    let make = make
     let length = length
     let is_empty = is_empty
     let pop = pop
     let ntz = ntz
     let nlz = nlz
     let get = get
+    let unsafe_get = unsafe_get
     let set = set
+    let unsafe_set = unsafe_set
     let bw_or = bw_or
     let bw_and = bw_and
     let bw_xor = bw_xor
     let bw_not = bw_not
+    let elements = elements
   end)
 
-  let empty: size -> t = fun _ -> assert false (*TODO*)
-  let full: size -> t = fun _ -> assert false (*TODO*)
-  let mem: elt -> t -> bool = fun _ -> assert false (*TODO*)
-  let singleton size i = set (make size false) i true
-  let iter: (elt -> unit) -> t -> unit = fun _ -> assert false (*TODO*)
-  let map: (elt -> elt) -> t -> t = fun _ -> assert false (*TODO*)
-  let fold: (elt -> 'a -> 'a) -> t -> 'a -> 'a = fun _ -> assert false (*TODO*)
-  let for_all: (elt -> bool) -> t -> bool = fun _ -> assert false (*TODO*)
-  let exists: (elt -> bool) -> t -> bool = fun _ -> assert false (*TODO*)
-  let filter: (elt -> bool) -> t -> t = fun _ -> assert false (*TODO*)
-  let filter_map: (elt -> elt option) -> t -> t = fun _ -> assert false (*TODO*)
-  let partition: (elt -> bool) -> t -> t * t = fun _ -> assert false (*TODO*)
-  let elements: t -> elt list = fun _ -> assert false (*TODO*)
-  let choose: t -> elt = fun _ -> assert false (*TODO*)
-  let choose_opt: t -> elt option = fun _ -> assert false (*TODO*)
-  let split: elt -> t -> t * bool * t = fun _ -> assert false (*TODO*)
-  let find: elt -> t -> elt = fun _ -> assert false (*TODO*)
-  let find_opt: elt -> t -> elt option = fun _ -> assert false (*TODO*)
-  let find_first: (elt -> bool) -> t -> elt = fun _ -> assert false (*TODO*)
-  let find_first_opt: (elt -> bool) -> t -> elt option = fun _ -> assert false (*TODO*)
-  let find_last: (elt -> bool) -> t -> elt = fun _ -> assert false (*TODO*)
-  let find_last_opt: (elt -> bool) -> t -> elt option = fun _ -> assert false (*TODO*)
-  let of_list: elt list -> t = fun _ -> assert false (*TODO*)
-  let to_seq_from : elt -> t -> elt Seq.t = fun _ -> assert false (*TODO*)
-  let to_seq : t -> elt Seq.t = fun _ -> assert false (*TODO*)
-  let to_rev_seq : t -> elt Seq.t = fun _ -> assert false (*TODO*)
-  let add_seq : elt Seq.t -> t -> t = fun _ -> assert false (*TODO*)
-  let of_seq : elt Seq.t -> t = fun _ -> assert false (*TODO*)
-  let print_set: Format.formatter -> t -> unit = fun _ -> assert false (*TODO*)
+  let singleton size i =
+    set (make size false) i true
 
-  let compare: t -> t -> int = Stdlib.compare
-  let equal: t -> t -> bool = (=)
-  let hash: t -> int = Hashtbl.hash
+  let iteri_true f v =
+    let rec iter ofs = function
+    | Leaf x ->
+        Native.iteri_true_ofs f ofs (bits x)
+    | Node {high;low;info} ->
+        let ll = length low in
+        if nntz info < ll then iter ofs low;
+        if not (is_empty high) then iter (ofs+ll) high
+    in
+    iter 0 v
+
+  let foldi_true f v acc =
+    let rec fold ofs acc = function
+    | Leaf x ->
+        Native.foldi_true_ofs f ofs (bits x) acc
+    | Node {high;low;info} ->
+        let ll = length low in
+        let acc = if nntz info < ll then fold ofs acc low else acc in
+        if not (is_empty high) then fold (ofs+ll) acc high else acc
+    in
+    fold 0 acc v
 
 end
 

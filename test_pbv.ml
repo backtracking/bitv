@@ -56,7 +56,7 @@ let () =
 
 (* test any implementation, with a given size *)
 let test (module X: S) (size: int) =
-  (* Format.printf "size = %d@." size; *)
+  Format.printf "size = %d@." size;
   let v0 = X.make size false in
   (* Format.printf "  v0 = %a@." X.print v0; *)
   assert (X.length v0 = size);
@@ -93,6 +93,7 @@ let test (module X: S) (size: int) =
     assert (X.min_elt s = i);
     assert (X.max_elt s = i);
   done;
+  (*** Eratosthene's sieve *)
   let sieve (limit: int) =
     assert (limit > 1);
     let rec loop v n =
@@ -110,6 +111,18 @@ let test (module X: S) (size: int) =
   in
   if size >= 101 then assert (X.pop (sieve 100) = 25);
   if size >= 1001 then assert (X.pop (sieve 1000) = 168);
+  (*****)
+  for _ = 1 to 10 do
+    let i = Random.int size in
+    let v = X.singleton size i in
+    assert (X.pop v = 1);
+    assert (X.find_first (fun j -> j >= i) v = i);
+    assert (List.of_seq (X.to_seq v) = [i]);
+  done;
+  if size >= 10 then (
+    let v = X.init size (fun i -> i < 10) in
+    assert (X.foldi_true (+) v 0 = 45)
+  );
   ()
 
 let () = test (module Native) Sys.int_size
@@ -118,3 +131,10 @@ let () = test (module Large) 32
 let () = test (module Large) Sys.int_size
 let () = test (module Large) 200
 let () = test (module Large) 1100
+
+let () =
+  let open Large in
+  let v = init 10 (fun _ -> true) in
+  assert (foldi_true (+) v 0 = 45);
+  ()
+
