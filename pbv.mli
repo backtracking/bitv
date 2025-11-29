@@ -22,6 +22,7 @@
 
 module type S = sig
   type t
+  (** the type of persistent bit vectors *)
 
   (** Array interface *)
 
@@ -30,7 +31,7 @@ module type S = sig
   val make: int -> bool -> t
   val get: t -> int -> bool
   val set: t -> int -> bool -> t
-  (* TODO: iter, print, fill, blit, sub, append *)
+  (* TODO: init, iter, print, fill, blit, sub, append *)
 
   (** Bit vector interface *)
 
@@ -89,14 +90,20 @@ module type S = sig
   val add_seq : elt Seq.t -> t -> t
   val of_seq : elt Seq.t -> t
   val print_set: Format.formatter -> t -> unit
+  (* TODO iter_subsets *)
 
   val compare: t -> t -> int
   val equal: t -> t -> bool
   val hash: t -> int
+
+  val unsafe_get: t -> int -> bool
+  val unsafe_set: t -> int -> bool -> t
 end
 
 module Native : S
   (** Bit-vectors of size [Sys.int_size].
       Note: The size parameter of [empty] and [full] is ignored. *)
+
+module Large : S
 
 val fixed_size: int -> (module S)

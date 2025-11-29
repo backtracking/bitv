@@ -70,6 +70,8 @@ let test (module X: S) (size: int) =
     assert (X.length b = size);
     assert (X.get b i);
     assert (X.pop b = 1);
+    assert (X.ntz b = i);
+    assert (b = X.singleton size i);
     assert (X.swap b i = v0);
     let v = X.set v1 i false in
     assert (X.length v = size);
@@ -84,7 +86,31 @@ let test (module X: S) (size: int) =
     assert (X.min_elt s = i);
     assert (X.max_elt s = i);
   done;
+  let sieve (limit: int) =
+    assert (limit > 1);
+    let rec loop v n =
+      if n > limit then v else
+      if X.unsafe_get v n then (* n is prime *)
+        let rec mark v i =
+          if i > limit then v else
+          let v = X.unsafe_set v i false in mark v (i + 2*n) in
+        let v = if n <= limit/n then mark v (n * n) else v in
+        loop v (n + 2)
+      else
+        loop v (n + 2) in
+    let v = X.make (limit + 1) true in
+    let v = X.unsafe_set v 0 false in
+    let v = X.unsafe_set v 1 false in
+    loop v 3
+  in
+  if size >= 101 then assert (X.pop (sieve 100) = 25);
+  if size >= 1001 then assert (X.pop (sieve 1000) = 168);
   ()
 
 let () = test (module Native) Sys.int_size
+let () = test (module Large) 31
+let () = test (module Large) 32
+let () = test (module Large) Sys.int_size
+let () = test (module Large) 200
+
 

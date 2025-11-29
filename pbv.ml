@@ -78,6 +78,21 @@ module type S = sig
   val compare: t -> t -> int
   val equal: t -> t -> bool
   val hash: t -> int
+
+  val unsafe_get: t -> int -> bool
+  val unsafe_set: t -> int -> bool -> t
+end
+
+module SetOps(X: sig
+  type t
+  val length: t -> int
+  val pop: t -> int
+  val get: t -> int -> bool
+end) = struct
+  let mem i v = X.get v i
+  let cardinal = X.pop
+  let find i s = if mem i s then i else raise Not_found
+  let find_opt i s = if mem i s then Some i else None
 end
 
 module Native = struct
@@ -175,8 +190,6 @@ module Native = struct
 
   let empty _n = 0
   let full _n = -1
-  let mem i v = get v i
-  let cardinal = pop
   let singleton len i =
     if i < 0 || i >= len then invalid_arg "singleton";
     1 lsl i
@@ -192,8 +205,12 @@ module Native = struct
   let max_elt_opt v =
     if is_empty v then None else Some (Sys.int_size - 1 - nlz v)
 
-  let find i s = if mem i s then i else raise Not_found
-  let find_opt i s = if mem i s then Some i else None
+  include SetOps(struct
+    type t_ = t type t = t_
+    let length = length
+    let pop = pop
+    let get = get
+  end)
 
   let choose = min_elt
   let choose_opt = min_elt_opt
@@ -313,9 +330,170 @@ module Native = struct
 
 end
 
+module Large : S = struct
+
+  (* leaf
+         62     56     50     44     38     32 31                           0
+         +-+------+------+------+------+------+------------------------------+
+         |?|  ??  | nlz  | ntz  | pop  | size |            bits              |
+         +-+------+------+------+------+------+------------------------------+
+     node info
+         62 61                              31 30                           0
+         +-+----------------------------------+------------------------------+
+         |?|             ntz                  |            size              |
+         +-+----------------------------------+------------------------------+
+  *)
+
+  let ilen x = (x lsr 32) land 0x3F
+  let ipop x = (x lsr 38) land 0x3F
+  let intz x = (x lsr 44) land 0x3F
+  let inlz x = (x lsr 50) land 0x3F
+  let imk ~nlz ~ntz ~pop ~size bits =
+    assert (bits < 0x1_0000_0000);
+    (nlz lsl 50) lor (ntz lsl 44) lor (pop lsl 38) lor (size lsl 32) lor bits
+
+  let izeros size =
+    assert (size <= 32);
+    imk ~nlz:size ~ntz:size ~pop:0 ~size 0
+  let iones size =
+    assert (size <= 32);
+    imk ~nlz:0 ~ntz:0 ~pop:size ~size 0xFFFF_FFFF
+  let imake size b = if b then iones size else izeros size
+
+  let nlen i = i land 0x7FFF_FFFF
+  let nntz i = i lsr 31
+
+  type t =
+    | Leaf of int
+    | Node of { info: int; high: t; low: t }
+
+  let length = function
+    | Leaf x        -> ilen x
+    | Node {info;_} -> nlen info
+
+  let ntz = function
+    | Leaf x        -> intz x
+    | Node {info;_} -> nntz info
+
+  let max_length = 1 lsl 31 - 1
+
+  let node ~low ~high =
+    let lenl = length low and lenh = length high in
+    let len = lenl + lenh in
+    if len > max_length then invalid_arg "max length exceeded";
+    let ntzl = ntz low and ntzh = ntz high in
+    let ntz = if ntzl < lenl then ntzl else lenl + ntzh in
+    let info = (ntz lsl 31) lor len in
+    Node { info; high; low }
+
+  type elt = int
+  type size = int
+
+  (* both size and size+1 *)
+  let make2 size _b =
+    if size < 32 then assert false (*TODO*) else assert false (*TODO*)
+
+  let make size b =
+    if size <= 32 then Leaf (imake size b) else
+    let v, _ = make2 size b in v
+
+  let rec unsafe_get v i = match v with
+    | Leaf x ->
+        (x lsr i) land 1 <> 0
+    | Node {high; low; _} ->
+        let ll = length low in
+        if i < ll then unsafe_get low i else unsafe_get high (i - ll)
+
+  let unsafe_set _v _i _b =
+    assert false (*TODO*)
+
+  let check_index s v i =
+    if i < 0 || i >= length v then invalid_arg s
+
+  let get v i =
+    check_index "get" v i;
+    unsafe_get v i
+
+  let set v i b =
+    check_index "set" v i;
+    unsafe_set v i b
+
+  let is_empty v =
+    ntz v = length v
+
+  let rec pop = function
+    | Leaf x -> ipop x
+    | Node { high; low; _ } -> pop high + pop low
+
+  include SetOps(struct
+    type t_ = t type t = t_
+    let length = length
+    let pop = pop
+    let get = get
+  end)
+
+  let swap: t -> int -> t = fun _ -> assert false (*TODO*)
+
+  let bw_and: t -> t -> t = fun _ -> assert false (*TODO*)
+  let bw_or: t -> t -> t = fun _ -> assert false (*TODO*)
+  let bw_xor: t -> t -> t = fun _ -> assert false (*TODO*)
+  let bw_not: t -> t = fun _ -> assert false (*TODO*)
+
+  let rec nlz = function
+    | Leaf x -> inlz x
+    | Node { high; low; _ } ->
+        let nlzh = nlz high in
+        if nlzh < length high then nlzh else nlzh + nlz low
+
+  let empty: size -> t = fun _ -> assert false (*TODO*)
+  let full: size -> t = fun _ -> assert false (*TODO*)
+  let mem: elt -> t -> bool = fun _ -> assert false (*TODO*)
+  let singleton: size -> elt -> t = fun _ -> assert false (*TODO*)
+  let min_elt: t -> elt = fun _ -> assert false (*TODO*)
+  let min_elt_opt: t -> elt option = fun _ -> assert false (*TODO*)
+  let max_elt: t -> elt = fun _ -> assert false (*TODO*)
+  let max_elt_opt: t -> elt option = fun _ -> assert false (*TODO*)
+  let add: elt -> t -> t = fun _ -> assert false (*TODO*)
+  let remove: elt -> t -> t = fun _ -> assert false (*TODO*)
+  let union: t -> t -> t = fun _ -> assert false (*TODO*)
+  let inter: t -> t -> t = fun _ -> assert false (*TODO*)
+  let diff: t -> t -> t = fun _ -> assert false (*TODO*)
+  let subset: t -> t -> bool = fun _ -> assert false (*TODO*)
+  let disjoint: t -> t -> bool = fun _ -> assert false (*TODO*)
+  let iter: (elt -> unit) -> t -> unit = fun _ -> assert false (*TODO*)
+  let map: (elt -> elt) -> t -> t = fun _ -> assert false (*TODO*)
+  let fold: (elt -> 'a -> 'a) -> t -> 'a -> 'a = fun _ -> assert false (*TODO*)
+  let for_all: (elt -> bool) -> t -> bool = fun _ -> assert false (*TODO*)
+  let exists: (elt -> bool) -> t -> bool = fun _ -> assert false (*TODO*)
+  let filter: (elt -> bool) -> t -> t = fun _ -> assert false (*TODO*)
+  let filter_map: (elt -> elt option) -> t -> t = fun _ -> assert false (*TODO*)
+  let partition: (elt -> bool) -> t -> t * t = fun _ -> assert false (*TODO*)
+  let elements: t -> elt list = fun _ -> assert false (*TODO*)
+  let choose: t -> elt = fun _ -> assert false (*TODO*)
+  let choose_opt: t -> elt option = fun _ -> assert false (*TODO*)
+  let split: elt -> t -> t * bool * t = fun _ -> assert false (*TODO*)
+  let find: elt -> t -> elt = fun _ -> assert false (*TODO*)
+  let find_opt: elt -> t -> elt option = fun _ -> assert false (*TODO*)
+  let find_first: (elt -> bool) -> t -> elt = fun _ -> assert false (*TODO*)
+  let find_first_opt: (elt -> bool) -> t -> elt option = fun _ -> assert false (*TODO*)
+  let find_last: (elt -> bool) -> t -> elt = fun _ -> assert false (*TODO*)
+  let find_last_opt: (elt -> bool) -> t -> elt option = fun _ -> assert false (*TODO*)
+  let of_list: elt list -> t = fun _ -> assert false (*TODO*)
+  let to_seq_from : elt -> t -> elt Seq.t = fun _ -> assert false (*TODO*)
+  let to_seq : t -> elt Seq.t = fun _ -> assert false (*TODO*)
+  let to_rev_seq : t -> elt Seq.t = fun _ -> assert false (*TODO*)
+  let add_seq : elt Seq.t -> t -> t = fun _ -> assert false (*TODO*)
+  let of_seq : elt Seq.t -> t = fun _ -> assert false (*TODO*)
+  let print_set: Format.formatter -> t -> unit = fun _ -> assert false (*TODO*)
+
+  let compare: t -> t -> int = fun _ -> assert false (*TODO*)
+  let equal: t -> t -> bool = fun _ -> assert false (*TODO*)
+  let hash: t -> int = fun _ -> assert false (*TODO*)
+
+end
+
 let fixed_size n : (module S) =
   if n = Sys.int_size then
     (module Native)
   else
     assert false (*TODO*)
-
