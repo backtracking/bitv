@@ -33,6 +33,7 @@ module type S = sig
   val get: t -> int -> bool
   val set: t -> int -> bool -> t
   val iteri: (int -> bool -> unit) -> t -> unit
+  val foldi: (int -> bool -> 'a -> 'a) -> t -> 'a -> 'a
   (* TODO: fill, blit, sub, append *)
 
   (** Bit vector interface *)
@@ -64,7 +65,7 @@ module type S = sig
 
   The iteration functions below are only iterating over the elements
   of the set, i.e. over the 1 bits of the bit vector, and not over all
-  the bits.  *)
+  the bits. (To iterate over the bits, use [iteri] and [foldi] above.)  *)
   type size = int
   type elt = int
   val empty: size -> t
@@ -113,9 +114,20 @@ module type S = sig
 end
 
 module Native : S
-  (** Bit-vectors of size [Sys.int_size].
-      Note: The size parameter of [empty] and [full] is ignored. *)
+  (** Bit vectors of size [Sys.int_size], implemented using a machine integer.
+      Note: The size parameter of [empty] and [full] is ignored,
+      and operations [sub] and [append] are not supported. *)
+
+module Small(X: sig val size: int end) : S
+  (** Bit vectors of size at most [Sys.int_size], implemented using a
+      machine integer. *)
 
 module Large : S
+  (** Bit vectors of arbitrary size, up to [2**31 - 1]. *)
 
 val fixed_size: int -> (module S)
+  (** Bit vectors of fixed size. The relevant implementation is selected:
+      either a single machine integer when the size is small enough, or
+      large bit vectors otherwise.
+
+      Operations [sub] and [append] are not supported. *)

@@ -22,6 +22,7 @@ module type S = sig
   val get: t -> int -> bool
   val set: t -> int -> bool -> t
   val iteri: (int -> bool -> unit) -> t -> unit
+  val foldi: (int -> bool -> 'a -> 'a) -> t -> 'a -> 'a
 
   val swap: t -> int -> t
   val bw_and: t -> t -> t
@@ -319,6 +320,12 @@ module Native = struct
     let rec loop i = if i < n then (f i (unsafe_get v i); loop (i+1)) in
     loop 0
 
+  let foldi f v acc =
+    let n = length v in
+    let rec loop i acc =
+      if i < n then loop (i+1) (f i (unsafe_get v i) acc) else acc in
+    loop 0 acc
+
   let swap v i =
     check_index "swap" v i;
     v lxor (1 lsl i)
@@ -458,6 +465,49 @@ module Native = struct
 
 end
 
+module Small(X: sig val size: int end) : S = struct
+  include Native
+
+  let max_length =
+    X.size
+
+  let length _v =
+    X.size
+
+  let make n b =
+    if n <> X.size then invalid_arg "make";
+    if b then 1 lsl X.size - 1 else 0
+
+  let init _n f =
+    let rec build v i = if i < 0 then v else
+      let v = if f i then (v lsl 1) lor 1 else v lsl 1 in build v (i-1) in
+    build 0 (X.size - 1)
+
+  let bw_not v = (lnot v) land (1 lsl X.size - 1)
+
+  let ntz v = compute_ntz max_length v
+  let nlz v = compute_nlz max_length v
+
+  include SetOps(struct
+    type t_ = t type t = t_
+    let make = make
+    let length = length
+    let is_empty = is_empty
+    let pop = pop
+    let ntz = ntz
+    let nlz = nlz
+    let get = get
+    let unsafe_get = unsafe_get
+    let set = set
+    let unsafe_set = unsafe_set
+    let bw_or = bw_or
+    let bw_and = bw_and
+    let bw_xor = bw_xor
+    let bw_not = bw_not
+    let elements = elements
+  end)
+end
+
 module Large : S = struct
 
   (* rope-like data structure, with leaves for BV of size <= 32 and binary
@@ -468,16 +518,21 @@ module Large : S = struct
          +-+------+------+------+------+------+------------------------------+
          |?|  ??  | nlz  | ntz  | pop  | size |            bits              |
          +-+------+------+------+------+------+------------------------------+
+
      node info
          62 61                              31 30                           0
          +-+----------------------------------+------------------------------+
          |?|             ntz                  |            size              |
          +-+----------------------------------+------------------------------+
+
+     We have constant time access to [length] and [ntz], and thus
+     constant time functions [is_empty] and [min_elt].
   *)
   type t =
     | Leaf of int
     | Node of { info: int; high: t; low: t }
 
+  (* the representation is unique *)
   let compare: t -> t -> int = Stdlib.compare
   let equal: t -> t -> bool = (=)
   let hash: t -> int = Hashtbl.hash
@@ -537,6 +592,9 @@ module Large : S = struct
     | Leaf x        -> intz x
     | Node {info;_} -> nntz info
 
+  let is_empty v =
+    ntz v = length v
+
   let max_length = 1 lsl 31 - 1
 
   let node ~high ~low =
@@ -575,6 +633,9 @@ module Large : S = struct
         let ll = length low in
         if i < ll then unsafe_get low i else unsafe_get high (i - ll)
 
+  let unsafe_get v i =
+    if is_empty v then false else unsafe_get v i
+
   let rec unsafe_set v i b = match v with
     | Leaf x ->
         if iget x i = b then v else Leaf (iswap x i)
@@ -593,9 +654,6 @@ module Large : S = struct
   let set v i b =
     check_index "set" v i;
     unsafe_set v i b
-
-  let is_empty v =
-    ntz v = length v
 
   let rec pop = function
     | Leaf x -> ipop x
@@ -634,6 +692,13 @@ module Large : S = struct
     let n = length v in
     let rec loop i = if i < n then (f i (unsafe_get v i); loop (i+1)) in
     loop 0
+
+  (* FIXME: improve *)
+  let foldi f v acc =
+    let n = length v in
+    let rec loop i acc =
+      if i < n then loop (i+1) (f i (unsafe_get v i) acc) else acc in
+    loop 0 acc
 
   let elements v =
     let rec elements acc ofs = function
@@ -697,5 +762,7 @@ end
 let fixed_size n : (module S) =
   if n = Sys.int_size then
     (module Native)
+  else if n < Sys.int_size then
+    (module Small(struct let size = n end))
   else
     assert false (*TODO*)

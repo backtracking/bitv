@@ -62,12 +62,19 @@ let test (module X: S) (size: int) =
   assert (X.length v0 = size);
   assert (X.is_empty v0);
   assert (X.pop v0 = 0);
+  assert (X.nlz v0 = size);
+  assert (X.ntz v0 = size);
   let v1 = X.make size true in
   (* Format.printf "  v1 = %a@." X.print v1; *)
   assert (X.length v1 = size);
   assert (X.pop v1 = size);
   assert (X.nlz v1 = 0);
   assert (X.ntz v1 = 0);
+  assert (X.bw_not v1 = v0);
+  assert (X.bw_not v0 = v1);
+  assert (X.bw_and v1 v0 = v0);
+  assert (X.bw_xor v1 v0 = v1);
+  assert (X.bw_or v1 v0 = v1);
   for i = 0 to size - 1 do
     (* Format.printf "  i = %d@." i; *)
     let b = X.set v0 i true in
@@ -126,6 +133,7 @@ let test (module X: S) (size: int) =
   ()
 
 let () = test (module Native) Sys.int_size
+let () = test (fixed_size 17) 17
 let () = test (module Large) 31
 let () = test (module Large) 32
 let () = test (module Large) Sys.int_size
@@ -137,4 +145,3 @@ let () =
   let v = init 10 (fun _ -> true) in
   assert (foldi_true (+) v 0 = 45);
   ()
-
