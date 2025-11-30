@@ -62,6 +62,7 @@ module type S = sig
   val disjoint: t -> t -> bool
   val iteri_true: (elt -> unit) -> t -> unit
   val foldi_true: (elt -> 'a -> 'a) -> t -> 'a -> 'a
+  val iter_subsets: (t -> unit) -> t -> unit
   val for_all: (elt -> bool) -> t -> bool
   val exists: (elt -> bool) -> t -> bool
   val filter: (elt -> bool) -> t -> t
@@ -273,7 +274,9 @@ let compute_nlz size x =
   let rec loop i = if x land i != 0 then size - 1 - tib i else loop (i lsr 1) in
   loop (1 lsl (size - 1))
 
-module Native = struct
+module Small(X: sig val size: int end) = struct
+
+  let () = if X.size < 0 || X.size > Sys.int_size then invalid_arg "Small"
 
   type t = int (* including the sign bit *)
 
@@ -285,18 +288,18 @@ module Native = struct
   type elt = int
 
   let max_length =
-    Sys.int_size
+    X.size
 
   let length _v =
-    Sys.int_size
+    X.size
 
   let make _n b =
-    if b then -1 else 0
+    if b then 1 lsl X.size - 1 else 0
 
   let init _n f =
     let rec build v i = if i < 0 then v else
       let v = if f i then (v lsl 1) lor 1 else v lsl 1 in build v (i-1) in
-    build 0 (Sys.int_size - 1)
+    build 0 (X.size - 1)
 
   let unsafe_get v i =
     (v lsr i) land 1 <> 0
@@ -333,7 +336,7 @@ module Native = struct
   let bw_or  = (lor)
   let bw_and = (land)
   let bw_xor = (lxor)
-  let bw_not = (lnot)
+  let bw_not v = (lnot v) land (1 lsl X.size - 1)
 
   let ntz v = compute_ntz max_length v
   let nlz v = compute_nlz max_length v
@@ -401,6 +404,12 @@ module Native = struct
     if v == 0 then acc else
     let i = v land (-v) in foldi_true_ofs f ofs (v - i) (f (ofs + tib i) acc)
 
+  let iter_subsets f v =
+    let rec iter s v =
+      if v = 0 then f s else (
+      let b = v land (-v) in let v = v - b in iter (s + b) v; iter s v) in
+    iter 0 v
+
   let rec for_all p v =
     v == 0 || let i = v land (-v) in p (tib i) && for_all p (v - i)
 
@@ -465,48 +474,7 @@ module Native = struct
 
 end
 
-module Small(X: sig val size: int end) : S = struct
-  include Native
-
-  let max_length =
-    X.size
-
-  let length _v =
-    X.size
-
-  let make n b =
-    if n <> X.size then invalid_arg "make";
-    if b then 1 lsl X.size - 1 else 0
-
-  let init _n f =
-    let rec build v i = if i < 0 then v else
-      let v = if f i then (v lsl 1) lor 1 else v lsl 1 in build v (i-1) in
-    build 0 (X.size - 1)
-
-  let bw_not v = (lnot v) land (1 lsl X.size - 1)
-
-  let ntz v = compute_ntz max_length v
-  let nlz v = compute_nlz max_length v
-
-  include SetOps(struct
-    type t_ = t type t = t_
-    let make = make
-    let length = length
-    let is_empty = is_empty
-    let pop = pop
-    let ntz = ntz
-    let nlz = nlz
-    let get = get
-    let unsafe_get = unsafe_get
-    let set = set
-    let unsafe_set = unsafe_set
-    let bw_or = bw_or
-    let bw_and = bw_and
-    let bw_xor = bw_xor
-    let bw_not = bw_not
-    let elements = elements
-  end)
-end
+module Native = Small(struct let size = Sys.int_size end)
 
 module Large : S = struct
 
@@ -757,7 +725,12 @@ module Large : S = struct
     in
     fold 0 acc v
 
+  let iter_subsets _f _v =
+    assert false (*TODO*)
+
 end
+
+(* TODO: module FixedSize for large bit vectors with a fixed size *)
 
 let fixed_size n : (module S) =
   if n = Sys.int_size then

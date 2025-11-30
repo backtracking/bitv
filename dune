@@ -30,3 +30,9 @@
  (modules bench)
  (promote (until-clean))
  (libraries unix bitv))
+
+(executable
+ (name bench_pbv)
+ (modules bench_pbv)
+ (promote (until-clean))
+ (libraries unix bitv))

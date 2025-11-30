@@ -34,7 +34,7 @@ module type S = sig
   val set: t -> int -> bool -> t
   val iteri: (int -> bool -> unit) -> t -> unit
   val foldi: (int -> bool -> 'a -> 'a) -> t -> 'a -> 'a
-  (* TODO: fill, blit, sub, append *)
+  (* TODO: fill, blit, sub, append, random *)
 
   (** Bit vector interface *)
 
@@ -87,6 +87,7 @@ module type S = sig
   val disjoint: t -> t -> bool
   val iteri_true: (elt -> unit) -> t -> unit
   val foldi_true: (elt -> 'a -> 'a) -> t -> 'a -> 'a
+  val iter_subsets: (t -> unit) -> t -> unit
   val for_all: (elt -> bool) -> t -> bool
   val exists: (elt -> bool) -> t -> bool
   val filter: (elt -> bool) -> t -> t
@@ -110,17 +111,18 @@ module type S = sig
   val of_seq: elt Seq.t -> t
   val print_set: Format.formatter -> t -> unit
     (** prints a bit vector as a set, using notation [{x1,x2,...,xn}]. *)
-  (* TODO iter_subsets *)
 end
 
-module Native : S
-  (** Bit vectors of size [Sys.int_size], implemented using a machine integer.
-      Note: The size parameter of [empty] and [full] is ignored,
-      and operations [sub] and [append] are not supported. *)
-
 module Small(X: sig val size: int end) : S
-  (** Bit vectors of size at most [Sys.int_size], implemented using a
-      machine integer. *)
+  (** Bit vectors of fixed size not exceeding [Sys.int_size],
+      implemented using a machine integer.
+
+      Note: The size parameter of [empty] and [full] is ignored, and
+      operations [sub] and [append] are not supported. *)
+
+module Native : S
+  (** Bit vectors of size [Sys.int_size], implemented using a machine
+      integer. *)
 
 module Large : S
   (** Bit vectors of arbitrary size, up to [2**31 - 1]. *)
