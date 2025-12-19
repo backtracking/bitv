@@ -2,7 +2,7 @@
  (public_name bitv)
  (flags
   (:standard -w -32))
- (modules bitv))
+ (modules bitv pbv))
 
 (library
  (public_name bitv.string)
@@ -16,6 +16,13 @@
  (libraries bitv))
 
 (test
+ (name test_pbv)
+ (modules test_pbv)
+ (flags
+  (:standard -w -32))
+ (libraries bitv))
+
+(test
  (name sieve)
  (modules sieve)
  (libraries bitv))
@@ -23,5 +30,11 @@
 (executable
  (name bench)
  (modules bench)
+ (promote (until-clean))
+ (libraries unix bitv))
+
+(executable
+ (name bench_pbv)
+ (modules bench_pbv)
  (promote (until-clean))
  (libraries unix bitv))

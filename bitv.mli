@@ -18,7 +18,11 @@
     the same operations as module [Array]. It also provides bitwise operations
     and conversions to/from integer types.
 
-    In the following, [false] stands for bit 0 and [true] for bit 1. *)
+    In the following, [false] stands for bit 0 and [true] for bit 1.
+
+    This is an imperative data structure. For persistence bit vectors,
+    see module [Pbv].
+*)
 
 type t
 (** the type of bit vectors *)
@@ -27,7 +31,7 @@ type t
 
 val create : int -> bool -> t
 (** [(Bitv.create n b)] creates a new bit vector of length [n],
-   initialized with [b]. *)
+    initialized with [b]. *)
 
 val init : int -> (int -> bool) -> t
 (** [(Bitv.init n f)] returns a fresh vector of length [n],

@@ -1,4 +1,6 @@
 
+  - new module [Pbv] for persistent bit vectors
+
 # 2.1 (22/08/2025)
   - fixed bug in `random`
   - fixed negative `max_length` on JavaScript platform
