@@ -145,3 +145,22 @@ let () =
   let v = init 10 (fun _ -> true) in
   assert (foldi_true (+) v 0 = 45);
   ()
+
+module Set = Make(struct
+  include String
+  let print = Format.pp_print_string
+end)
+let () =
+  let el = ["a";"b";"c"] in
+  let module S = (val Set.create el) in
+  let s = S.empty 0 in
+  List.iter (fun x -> assert (not (S.mem x s))) el;
+  let s = S.add "a" s in
+  assert (S.mem "a" s);
+  Format.printf "s = %a@." S.print_set s;
+  let s = S.add "b" s in
+  let s = S.add "b" s in
+  Format.printf "s = @[%a@]@." S.print_set s;
+  ()
+
+

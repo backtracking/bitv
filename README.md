@@ -10,8 +10,12 @@ opam install bitv
 
 ## Usage
 
-The library provides a single module, `Bitv`.  The documentation is
-available [here](https://backtracking.github.io/bitv).
+The library provides two modules:
+- `Bitv`, for imperative bit vectors;
+- `Pbv`, for persistence bit vectors.
+
+The documentation is available
+[here](https://backtracking.github.io/bitv).
 
 ## Bug reports
 

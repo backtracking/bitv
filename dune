@@ -18,6 +18,8 @@
 (test
  (name test_pbv)
  (modules test_pbv)
+ (flags
+  (:standard -w -32))
  (libraries bitv))
 
 (test

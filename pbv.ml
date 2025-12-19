@@ -13,42 +13,15 @@
 (*                                                                        *)
 (**************************************************************************)
 
-module type S = sig
+module type SET = sig
+  type elt
   type t
-  val max_length: int
-  val length: t -> int
-  val make: int -> bool -> t
-  val init: int -> (int -> bool) -> t
-  val get: t -> int -> bool
-  val set: t -> int -> bool -> t
-  val iteri: (int -> bool -> unit) -> t -> unit
-  val foldi: (int -> bool -> 'a -> 'a) -> t -> 'a -> 'a
-
-  val swap: t -> int -> t
-  val bw_and: t -> t -> t
-  val bw_or: t -> t -> t
-  val bw_xor: t -> t -> t
-  val bw_not: t -> t
-  val pop: t -> int
-  val ntz: t -> int
-  val nlz: t -> int
-  val print: Format.formatter -> t -> unit
-
-  val compare: t -> t -> int
-  val equal: t -> t -> bool
-  val hash: t -> int
-
-  val unsafe_get: t -> int -> bool
-  val unsafe_set: t -> int -> bool -> t
-
-  type size = int
-  type elt = int
-  val empty: size -> t
+  val empty: int -> t
   val is_empty: t -> bool
-  val full: size -> t
+  val full: int -> t
   val mem: elt -> t -> bool
-  val cardinal: t -> int
-  val singleton: size -> elt -> t
+  val cardinal: t -> int (* same as pop *)
+  val singleton: int -> elt -> t
   val min_elt: t -> elt
   val min_elt_opt: t -> elt option
   val max_elt: t -> elt
@@ -79,13 +52,56 @@ module type S = sig
   val find_last: (elt -> bool) -> t -> elt
   val find_last_opt: (elt -> bool) -> t -> elt option
   val of_list: elt list -> t
-  val to_seq_from : elt -> t -> elt Seq.t
-  val to_seq : t -> elt Seq.t
-  val to_rev_seq : t -> elt Seq.t
-  val add_seq : elt Seq.t -> t -> t
-  val of_seq : elt Seq.t -> t
+  val to_seq_from: elt -> t -> elt Seq.t
+  val to_seq: t -> elt Seq.t
+  val to_rev_seq: t -> elt Seq.t
+  val add_seq: elt Seq.t -> t -> t
+  val of_seq: elt Seq.t -> t
   val print_set: Format.formatter -> t -> unit
+    (** prints a bit vector as a set, using notation [{x1,x2,...,xn}]. *)
 end
+
+module type S = sig
+  type t
+  val max_length: int
+  val length: t -> int
+  val make: int -> bool -> t
+  val init: int -> (int -> bool) -> t
+  val get: t -> int -> bool
+  val set: t -> int -> bool -> t
+  val iteri: (int -> bool -> unit) -> t -> unit
+  val foldi: (int -> bool -> 'a -> 'a) -> t -> 'a -> 'a
+
+  val swap: t -> int -> t
+  val bw_and: t -> t -> t
+  val bw_or: t -> t -> t
+  val bw_xor: t -> t -> t
+  val bw_not: t -> t
+  val pop: t -> int
+  val ntz: t -> int
+  val nlz: t -> int
+  val print: Format.formatter -> t -> unit
+
+  val compare: t -> t -> int
+  val equal: t -> t -> bool
+  val hash: t -> int
+
+  val unsafe_get: t -> int -> bool
+  val unsafe_set: t -> int -> bool -> t
+
+  include SET with type elt = int and type t := t
+end
+
+let print_list_as_set print fmt l =
+  let rec pr = function
+    | [] -> ()
+    | x :: l ->
+        print fmt x; if l <> [] then Format.fprintf fmt ",@,";
+        pr l
+  in
+  Format.fprintf fmt "{";
+  pr l;
+  Format.fprintf fmt "}"
 
 module SetOps(X: sig
   type t
@@ -198,16 +214,8 @@ end) = struct
   let split x v =
     filter (fun y -> y < x) v, X.get v x, filter (fun y -> y > x) v
 
-  let print_set fmt v =
-    let rec pr = function
-      | [] -> ()
-      | x :: l ->
-          Format.fprintf fmt "%d" x; if l <> [] then Format.fprintf fmt ",@,";
-          pr l
-    in
-    Format.fprintf fmt "{";
-    pr (X.elements v);
-    Format.fprintf fmt "}"
+  let print_set fmt s =
+    print_list_as_set Format.pp_print_int fmt (X.elements s)
 
   let of_list l =
     List.fold_left (fun s x -> add x s) (empty (List.length l)) l
@@ -284,7 +292,6 @@ module Small(X: sig val size: int end) = struct
   let equal = (==)
   let hash v = v
 
-  type size = int
   type elt = int
 
   let max_length =
@@ -478,24 +485,10 @@ module Native = Small(struct let size = Sys.int_size end)
 
 module Large : S = struct
 
+  type elt = int
+
   (* rope-like data structure, with leaves for BV of size <= 32 and binary
-     nodes otherwise
-
-     leaf
-         62     56     50     44     38     32 31                           0
-         +-+------+------+------+------+------+------------------------------+
-         |?|  ??  | nlz  | ntz  | pop  | size |            bits              |
-         +-+------+------+------+------+------+------------------------------+
-
-     node info
-         62 61                              31 30                           0
-         +-+----------------------------------+------------------------------+
-         |?|             ntz                  |            size              |
-         +-+----------------------------------+------------------------------+
-
-     We have constant time access to [length] and [ntz], and thus
-     constant time functions [is_empty] and [min_elt].
-  *)
+     nodes otherwise *)
   type t =
     | Leaf of int
     | Node of { info: int; high: t; low: t }
@@ -504,6 +497,13 @@ module Large : S = struct
   let compare: t -> t -> int = Stdlib.compare
   let equal: t -> t -> bool = (=)
   let hash: t -> int = Hashtbl.hash
+
+  (* leaf
+         62     56     50     44     38     32 31                           0
+         +-+------+------+------+------+------+------------------------------+
+         |?|  ??  | nlz  | ntz  | pop  | size |            bits              |
+         +-+------+------+------+------+------+------------------------------+
+  *)
 
   let bits x = x land 0xFFFF_FFFF
   let ilen x = (x lsr 32) land 0x3F
@@ -541,7 +541,7 @@ module Large : S = struct
       let v = if f i then (v lsl 1) lor 1 else v lsl 1 in build v (i-1) in
     build 0 (size - 1)
 
-  (* pre-allocated 0 and 1 leaves *)
+  (* pre-allocated 0 and 1 leaves for every size from 0 to 32 *)
   let izeros =
     Array.init 33 (fun size -> Leaf (imk ~nlz:size ~ntz:size ~pop:0 ~size 0))
   let iones =
@@ -549,8 +549,18 @@ module Large : S = struct
   let imake size b =
     if b then iones.(size) else izeros.(size)
 
+  (* binary node info
+         62 61                              31 30                           0
+         +-+----------------------------------+------------------------------+
+         |?|             ntz                  |            size              |
+         +-+----------------------------------+------------------------------+
+
+  *)
+
   let nlen i = i land 0x7FFF_FFFF
   let nntz i = i lsr 31
+
+  let max_length = 1 lsl 31 - 1
 
   let length = function
     | Leaf x        -> ilen x
@@ -559,11 +569,6 @@ module Large : S = struct
   let ntz = function
     | Leaf x        -> intz x
     | Node {info;_} -> nntz info
-
-  let is_empty v =
-    ntz v = length v
-
-  let max_length = 1 lsl 31 - 1
 
   let node ~high ~low =
     let lenl = length low and lenh = length high in
@@ -574,10 +579,14 @@ module Large : S = struct
     let info = (ntz lsl 31) lor len in
     Node { info; high; low }
 
-  type elt = int
-  type size = int
+  (* We have constant time access to [length] and [ntz], and thus
+     constant time functions [is_empty] and [min_elt]. *)
+
+  let is_empty v =
+    ntz v = length v
 
   (* returns both size and size+1 *)
+  (* FIXME preallocate size 33 *)
   let rec make2 size b =
     if size < 32 then imake size b, imake (size+1) b else
     if size = 32 then imake 32 b, node ~high:(imake 1 b) ~low:(imake 32 b) else
@@ -585,6 +594,7 @@ module Large : S = struct
     if size mod 2 = 0 then node ~high:vn ~low:vn , node ~high:vn  ~low:vn1
                       else node ~high:vn ~low:vn1, node ~high:vn1 ~low:vn1
 
+  (* FIXME specialized `make` for powers of two *)
   let make size b =
     let v, _ = make2 size b in v
 
@@ -739,3 +749,79 @@ let fixed_size n : (module S) =
     (module Small(struct let size = n end))
   else
     assert false (*TODO*)
+
+module type UNIVERSE = sig
+  type t
+  val hash: t -> int
+  val equal: t -> t -> bool
+  val print: Format.formatter -> t -> unit
+end
+
+module Make(X: UNIVERSE) = struct
+  let create ?(unsafe=false) elements =
+    let module H = Hashtbl.Make(X) in
+    let n = List.length elements in
+    if n = 0 then invalid_arg "create: empty list of elements";
+    let toint_ : int H.t = H.create n in
+    let ofint_ = Array.make n (List.hd elements) in
+    let next = ref 0 in
+    let add x =
+      if H.mem toint_ x then invalid_arg "create: duplicate element";
+      let i = !next in incr next; H.add toint_ x i; ofint_.(i) <- x in
+    List.iter add elements;
+    assert (!next = n);
+    let toint =
+      if unsafe then H.find toint_ else
+      fun x -> try H.find toint_ x with Not_found ->
+                 Format.kasprintf invalid_arg "not an element (%a)" X.print x in
+    let ofint (i: int) : X.t = Array.unsafe_get ofint_ i in
+    let module S = struct
+      module M = (val fixed_size n)
+      type elt = X.t
+      type t = M.t
+      let is_empty = M.is_empty
+      let empty _ = M.empty n
+      let full _ = M.full n
+      let add x s = M.add (toint x) s
+      let mem x s = M.mem (toint x) s
+      let cardinal = M.cardinal
+      let singleton _ x = toint x |> M.singleton n
+      let min_elt s = M.min_elt s |> ofint
+      let max_elt s = M.max_elt s |> ofint
+      let min_elt_opt s = M.min_elt_opt s |> Option.map ofint
+      let max_elt_opt s = M.max_elt_opt s |> Option.map ofint
+      let remove x s =  M.remove (toint x) s
+      let union = M.union
+      let inter = M.inter
+      let diff = M.diff
+      let subset = M.subset
+      let disjoint = M.disjoint
+      let transpose f x = f (ofint x)
+      let iteri_true f s = M.iteri_true (transpose f) s
+      let foldi_true f s acc = M.foldi_true (fun x acc -> f (ofint x) acc) s acc
+      let iter_subsets = M.iter_subsets
+      let for_all f s =  M.for_all (transpose f) s
+      let exists f s =  M.exists (transpose f) s
+      let filter f s = M.filter (transpose f) s
+      let filter_map f s = M.filter_map (fun x -> Option.map toint (f (ofint x))) s
+      let partition f s = M.partition (transpose f) s
+      let elements s = List.map ofint (M.elements s)
+      let choose s = M.choose s |> ofint
+      let choose_opt s = M.choose_opt s  |> Option.map ofint
+      let split x s = M.split (toint x) s
+      let find x s = M.find (toint x) s |> ofint
+      let find_opt x s = M.find_opt (toint x) s |> Option.map ofint
+      let find_first f s = M.find_first (transpose f) s |> ofint
+      let find_first_opt f s = M.find_first_opt (transpose f) s |> Option.map  ofint
+      let find_last f s = M.find_last (transpose f) s |> ofint
+      let find_last_opt f s = M.find_last_opt (transpose f) s |> Option.map  ofint
+      let of_list l = List.map toint l |> M.of_list
+      let to_seq_from x s = M.to_seq_from (toint x) s |> Seq.map ofint
+      let to_seq s = M.to_seq s |> Seq.map ofint
+      let to_rev_seq s = M.to_rev_seq s |> Seq.map ofint
+      let add_seq sq s = M.add_seq (Seq.map toint sq) s
+      let of_seq sq = Seq.map toint sq |> M.of_seq
+      let print_set fmt s = print_list_as_set X.print fmt (elements s)
+    end in
+    (module S : SET with type elt = X.t)
+end
