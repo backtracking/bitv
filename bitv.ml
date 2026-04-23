@@ -565,12 +565,13 @@ module L = S(struct let least_first = true end)
 module M = S(struct let least_first = false end)
 
 let tanimoto v1 v2 =
-  let l = v1.length in
-  if l <> v2.length then invalid_arg "Bitv.tanimoto";
-  let a = pop v1 in
-  let b = pop v2 in
-  let c = pop (bw_and v1 v2) in
-  (float c) /. (float (a + b - c))
+  if v1.length <> v2.length then invalid_arg "Bitv.tanimoto";
+  let u_card = pop (bw_or v1 v2) in
+  if u_card = 0 then
+    0.0
+  else
+    (* |A n B| / |A u B| *)
+    (float (pop (bw_and v1 v2))) /. (float u_card)
 
 (* Input/output in a machine-independent format. *)
 
